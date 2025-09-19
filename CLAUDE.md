@@ -6,12 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repository is a comprehensive agent management system that aggregates multiple Claude Code agent collections into a unified workspace. It combines:
 
-- **dLabs agents** (`dallasLabs/`) - 5 specialized agents with focus on specific technologies
+- **dLabs agents** (`agents/dallasLabs/`) - 5 specialized agents with focus on specific technologies
 - **wshobson agents** (82 agents) - Production-ready subagents covering full software development lifecycle
 - **awesome-claude-code-subagents** (116 agents) - Industry-standard subagents organized by domain
 - **wshobson commands** (56 commands) - Workflows and tools for multi-agent orchestration
 
-The repository provides automated setup scripts to clone external repositories and create organized symlink structures for seamless Claude Code integration.
+The repository provides both a modern Ruby CLI and legacy bash scripts to clone external repositories and create organized symlink structures for seamless Claude Code integration.
 
 ## Agent Architecture
 
@@ -25,7 +25,7 @@ The content includes specialized instructions, checklists, and behavior patterns
 
 ### Agent Collections Structure
 
-**dLabs Agents** (`dallasLabs/` → `~/.claude/agents/dLabs-*`)
+**dLabs Agents** (`agents/dallasLabs/` → `~/.claude/agents/dLabs-*`)
 - `dLabs-django-developer.md` - Django 5+ with modern Python practices
 - `dLabs-js-ts-tech-lead.md` - JavaScript/TypeScript technical leadership
 - `dLabs-data-analysis-expert.md` - Data analysis and visualization
@@ -36,35 +36,78 @@ The content includes specialized instructions, checklists, and behavior patterns
 - `wshobson-*` - 82 production-ready agents covering architecture, languages, domains
 - Category-prefixed agents from awesome-claude-code-subagents (116 total)
 
-## Setup and Development Commands
+## Development Commands
 
-### Initial Installation
+### Ruby CLI (Primary Interface)
+
+**Prerequisites:**
 ```bash
-# Complete setup: clone repositories and configure all symlinks
-./install.sh
+# Install Ruby dependencies
+bundle install
 ```
 
-### Individual Setup Scripts
+**Main Commands:**
 ```bash
-# dLabs agents
-./setup_agents.sh
+# Interactive installation and setup
+./bin/claude-agents install
 
-# wshobson agents (with wshobson- prefix)
-./setup_wshobson_agents_symlinks.sh
+# Individual component management
+./bin/claude-agents setup dlabs
+./bin/claude-agents setup wshobson-agents
+./bin/claude-agents setup wshobson-commands
+./bin/claude-agents setup awesome
 
-# wshobson commands (tools/ and workflows/ directories)
-./setup_wshobson_commands_symlinks.sh
+# System diagnostics and health check
+./bin/claude-agents doctor
 
-# awesome-claude-code-subagents (category-prefixed)
-./setup_awesome_agents_symlinks.sh
+# Status and information
+./bin/claude-agents status
+./bin/claude-agents version
+
+# Component removal
+./bin/claude-agents remove dlabs
+./bin/claude-agents remove wshobson-agents
+```
+
+**Code Quality:**
+```bash
+# Run RuboCop linting
+bundle exec rubocop
+
+# Auto-fix RuboCop issues
+bundle exec rubocop -a
+
+# Run RSpec tests (when available)
+bundle exec rspec
+```
+
+### Legacy Bash Scripts
+```bash
+# Complete setup (with deprecation warning)
+./bin/install.sh
+
+# Individual setup scripts
+./bin/setup_agents.sh                     # dLabs agents
+./bin/setup_wshobson_agents_symlinks.sh   # wshobson agents
+./bin/setup_wshobson_commands_symlinks.sh # wshobson commands
+./bin/setup_awesome_agents_symlinks.sh    # awesome agents
+
+# Removal scripts
+./bin/remove_dlabs_agents.sh
+./bin/remove_wshobson_agents.sh
+./bin/remove_wshobson_commands.sh
+./bin/remove_awesome_agents.sh
 ```
 
 ### Repository Management
 ```bash
-# Update all external repositories
-cd awesome-claude-code-subagents && git pull && cd ..
-cd wshobson-agents && git pull && cd ..
-cd wshobson-commands && git pull && cd ..
+# Update external repositories (Ruby CLI recommended)
+./bin/claude-agents doctor  # Shows repository status
+
+# Manual updates
+cd agents/awesome-claude-code-subagents && git pull && cd ../..
+cd agents/wshobson-agents && git pull && cd ../..
+cd agents/wshobson-commands && git pull && cd ../..
 ```
 
 ## Agent Organization
@@ -78,32 +121,68 @@ cd wshobson-commands && git pull && cd ..
 - wshobson: `wshobson-{agent-name}.md`
 - External: `{category}-{agent-name}.md`
 
-## Development Workflow
+## Architecture and Design
 
-### Adding New dLabs Agents
-1. Create agent definition in `dallasLabs/` with YAML frontmatter
-2. Run `./setup_agents.sh` to create symlinks
+### Ruby CLI Architecture
+The Ruby CLI is built using a service-oriented architecture with Thor framework:
+
+- **`ClaudeAgentsCLI`** - Main Thor-based CLI interface in `lib/claude_agents_cli.rb`
+- **`Config`** - Centralized configuration management in `lib/claude_agents/config.rb`
+- **Service Classes:**
+  - `Installer` - Handles component installation and repository cloning
+  - `Remover` - Manages component removal and cleanup
+  - `SymlinkManager` - Creates and manages symlinks between source and destination
+  - `FileProcessor` - Processes individual files and applies naming conventions
+  - `UI` - TTY-based user interface with colored output and progress indicators
+
+### Component Configuration
+Components are defined in `lib/claude_agents/config.rb` with:
+- Repository URLs and local directories
+- Source and destination paths
+- Naming prefixes and conventions
+- File skip patterns
+
+### Development Workflow
+
+**Adding New dLabs Agents:**
+1. Create agent definition in `agents/dallasLabs/` with YAML frontmatter
+2. Run `./bin/claude-agents setup dlabs` to create symlinks
 3. Test agent through Claude Code interface
 
-### Updating External Collections
-1. Use `./install.sh` to pull latest versions
-2. Existing symlinks are preserved unless explicitly recreated
-3. New agents from updates are automatically linked
+**Updating External Collections:**
+1. Use `./bin/claude-agents install` for interactive updates
+2. Use `./bin/claude-agents doctor` to check repository status
+3. Existing symlinks are preserved unless explicitly recreated
+
+**Code Development:**
+- Follow Ruby style guide (RuboCop configured)
+- Service classes handle specific responsibilities
+- UI class provides consistent user experience
+- Error classes provide structured exception handling
 
 ### Multi-Agent Orchestration
-- Use wshobson commands for complex workflows
+- wshobson commands enable complex multi-agent workflows
 - Commands coordinate multiple agents for full-stack operations
 - Tools provide focused, single-purpose functionality
 
 ## Repository Structure
 
 ```
-├── install.sh                              # Main installation script
-├── dallasLabs/                             # Local agent definitions
-├── awesome-claude-code-subagents/          # External: VoltAgent collection
-├── wshobson-agents/                        # External: wshobson agent collection
-├── wshobson-commands/                      # External: wshobson command collection
-└── setup_*.sh                             # Individual setup scripts
+├── bin/                                    # Executables and scripts
+│   ├── claude-agents                       # Primary Ruby CLI
+│   ├── install.sh                          # Legacy installer (deprecated)
+│   └── setup_*.sh                          # Legacy setup scripts
+├── lib/                                    # Ruby CLI implementation
+│   ├── claude_agents.rb                    # Main module and version
+│   ├── claude_agents_cli.rb                # Thor CLI interface
+│   └── claude_agents/                      # Service classes
+├── agents/                                 # Agent collections (auto-created)
+│   ├── dallasLabs/                         # Local agent definitions
+│   ├── awesome-claude-code-subagents/      # External: VoltAgent collection
+│   ├── wshobson-agents/                    # External: wshobson agent collection
+│   └── wshobson-commands/                  # External: wshobson command collection
+├── Gemfile                                 # Ruby dependencies
+└── CHANGELOG.md                            # Version history
 ```
 
-The system maintains separation between local (`dallasLabs`) and external collections while providing unified access through Claude Code.
+The system maintains separation between local (`agents/dallasLabs`) and external collections while providing unified access through Claude Code via organized symlinks in `~/.claude/agents/` and `~/.claude/commands/`.
