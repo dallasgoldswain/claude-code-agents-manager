@@ -157,7 +157,7 @@ module ClaudeAgents
       puts '• wshobson commands - Multi-agent workflow tools'
       puts '• awesome-claude-code-subagents - Industry-standard agent collection'
       puts
-      puts 'GitHub: https://github.com/your-username/claude-agents'
+      puts 'GitHub: https://github.com/dallasgoldswain/claude-code-agents-manager'
     end
 
     desc 'doctor', 'Check system health and dependencies'
@@ -302,7 +302,7 @@ module ClaudeAgents
       end
 
       # Check dLabs directory
-      dlabs_path = File.join(Config.project_root, 'dallasLabs')
+      dlabs_path = File.join(Config.project_root, 'agents', 'dallasLabs')
       if Dir.exist?(dlabs_path)
         @ui.success('dallasLabs directory is available')
       else
