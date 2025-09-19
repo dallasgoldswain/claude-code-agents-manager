@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-09-19
+
+### Added
+
+#### Interactive Installation System
+
+- **Interactive install script** - Users can now choose which components to install
+- **Automatic cleanup detection** - Detects existing installations and offers removal options
+- **Component-specific prompts** - Individual yes/no prompts for each agent collection
+- **Smart installation order** - Optimized installation sequence for better user experience
+
+#### Removal Management
+
+- **Complete removal system** with dedicated scripts for each collection:
+  - `remove_dlabs_agents.sh` - Removes dLabs agent symlinks
+  - `remove_wshobson_agents.sh` - Removes wshobson agent symlinks
+  - `remove_awesome_agents.sh` - Removes awesome-claude-code-subagents symlinks
+  - `remove_wshobson_commands.sh` - Removes wshobson command symlinks
+- **Automatic cleanup integration** - Removal scripts integrated into install process
+- **Safe removal logic** - Validates symlinks before removal, handles edge cases
+- **Progress feedback** - Colored output with removal summaries and statistics
+
+#### Branding Updates
+
+- **dLabs rebranding** - Changed all "dallas-" prefixes to "dLabs-" for better branding
+- **Consistent naming** - Updated all scripts, documentation, and examples
+- **Agent prefix migration** - All Dallas Labs agents now use `dLabs-` prefix
+
+### Changed
+
+#### Installation Experience
+
+- **install.sh** - Complete rewrite with interactive prompts and user choice
+- **User-driven installation** - No longer installs everything by default
+- **Removal-first workflow** - Offers cleanup before new installations
+- **Better error handling** - Enhanced error messages and validation
+
+#### Documentation Updates
+
+- **CLAUDE.md** - Updated all references to use dLabs naming
+- **README.md** - Updated examples, naming conventions, and usage patterns
+- **CONTRIBUTING.md** - Updated development guidelines and testing procedures
+- **Consistent terminology** - All documentation now uses dLabs branding
+
+#### Script Improvements
+
+- **setup_agents.sh** - Updated to use dLabs prefix and improved messaging
+- **Enhanced error handling** - Better validation and user feedback across all scripts
+- **Executable permissions** - All removal scripts properly configured
+
+### Technical Improvements
+
+- **Modular removal system** - Each collection has dedicated, focused removal script
+- **Interactive shell functions** - Reusable yes/no prompt system
+- **Better detection logic** - Improved existing installation detection
+- **Cross-platform compatibility** - Enhanced bash script compatibility
+
 ## [0.1.0] - 2025-09-19
 
 ### Added
@@ -20,12 +77,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Agent Collections
 
-- **Dallas Labs Collection** (5 agents)
-  - `dallas-django-developer` - Django 5+ with modern Python practices
-  - `dallas-js-ts-tech-lead` - JavaScript/TypeScript technical leadership
-  - `dallas-data-analysis-expert` - Data analysis and visualization
-  - `dallas-python-backend-engineer` - Python backend development
-  - `dallas-debug-specialist` - Debugging and troubleshooting
+- **dLabs Collection** (5 agents)
+  - `dLabs-django-developer` - Django 5+ with modern Python practices
+  - `dLabs-js-ts-tech-lead` - JavaScript/TypeScript technical leadership
+  - `dLabs-data-analysis-expert` - Data analysis and visualization
+  - `dLabs-python-backend-engineer` - Python backend development
+  - `dLabs-debug-specialist` - Debugging and troubleshooting
 
 - **External Collections Integration**
   - wshobson agents collection (82 production-ready agents)
@@ -34,7 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Setup Scripts
 
-- `setup_agents.sh` - Dallas Labs agent symlink management
+- `setup_agents.sh` - dLabs agent symlink management
 - `setup_wshobson_agents_symlinks.sh` - wshobson agents with prefixing
 - `setup_wshobson_commands_symlinks.sh` - Commands organized in tools/workflows
 - `setup_awesome_agents_symlinks.sh` - Category-prefixed agent organization
@@ -71,7 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial Dallas Labs agent definitions
+- Initial dLabs agent definitions
 - Basic symlink setup scripts
 - Core project structure
 
