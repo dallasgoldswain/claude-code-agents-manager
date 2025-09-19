@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Add lib directory to load path
+lib_path = File.expand_path('../lib', __dir__)
+$LOAD_PATH.unshift(lib_path) unless $LOAD_PATH.include?(lib_path)
+
+require 'claude_agents'
+
+# Handle graceful shutdown
+Signal.trap('INT') do
+  puts "\n\nGracefully shutting down..."
+  exit 0
+end
+
+Signal.trap('TERM') do
+  puts "\n\nReceived TERM signal, shutting down..."
+  exit 0
+end
+
+# Error handling for the entire application
+begin
+  ClaudeAgents::CLI.start(ARGV)
+rescue Interrupt
+  puts "\n\nOperation cancelled by user."
+  exit 0
+rescue SystemExit => e
+  exit e.status
+rescue StandardError => e
+  puts "\nUnexpected error occurred:"
+  puts "#{e.class}: #{e.message}"
+
+  if ENV['DEBUG'] || ARGV.include?('--debug')
+    puts "\nBacktrace:"
+    puts e.backtrace.join("\n")
+  else
+    puts "\nRun with --debug for full backtrace"
+  end
+
+  exit 1
+end

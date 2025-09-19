@@ -13,7 +13,8 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CATEGORIES_DIR="$SCRIPT_DIR/awesome-claude-code-subagents/categories"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+CATEGORIES_DIR="$PROJECT_ROOT/agents/awesome-claude-code-subagents/categories"
 DESTINATION_DIR="$HOME/.claude/agents"
 
 # Create destination directory if it doesn't exist

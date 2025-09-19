@@ -7,8 +7,12 @@
 
 set -e
 
+# Get script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 DEST_DIR="$HOME/.claude/commands"
-SOURCE_DIR="wshobson-commands"
+SOURCE_DIR="$PROJECT_ROOT/agents/wshobson-commands"
 SKIPPED_FILES=()
 
 # Check if source directory exists
@@ -53,7 +57,7 @@ if [ -d "$SOURCE_DIR/tools" ]; then
                 continue
             fi
             
-            src_path="$(pwd)/$file"
+            src_path="$file"
             dest_path="$DEST_DIR/tools/$filename"
             create_symlink "$src_path" "$dest_path" "tools/$filename"
         fi
@@ -73,7 +77,7 @@ if [ -d "$SOURCE_DIR/workflows" ]; then
                 continue
             fi
             
-            src_path="$(pwd)/$file"
+            src_path="$file"
             dest_path="$DEST_DIR/workflows/$filename"
             create_symlink "$src_path" "$dest_path" "workflows/$filename"
         fi
@@ -102,7 +106,7 @@ for file in "$SOURCE_DIR"/*; do
             continue
         fi
         
-        src_path="$(pwd)/$file"
+        src_path="$file"
         dest_path="$DEST_DIR/wshobson-$filename"
         create_symlink "$src_path" "$dest_path" "$filename"
     fi

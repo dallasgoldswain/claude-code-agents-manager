@@ -9,8 +9,10 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Source directory
-SOURCE_DIR="dallasLabs"
+# Get script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SOURCE_DIR="$PROJECT_ROOT/agents/dallasLabs"
 
 # Check if source directory exists
 if [ ! -d "$SOURCE_DIR" ]; then
@@ -27,16 +29,15 @@ skipped_files=()
 echo "Setting up dLabs agent symlinks to ~/.claude/agents..."
 echo
 
-# Get current directory
-current_dir=$(pwd)
-
-# Change to source directory
-cd "$SOURCE_DIR"
+# Work with absolute paths
+current_dir="$PROJECT_ROOT"
 
 # Loop through all files in dallasLabs directory
-for file in *; do
+for file in "$SOURCE_DIR"/*; do
+    # Get just the filename
+    file="$(basename "$file")"
     # Skip if it's a directory
-    if [ -d "$file" ]; then
+    if [ -d "$SOURCE_DIR/$file" ]; then
         continue
     fi
 
@@ -69,7 +70,7 @@ for file in *; do
         echo -e "${YELLOW}SKIPPED:${NC} dLabs-$file (already exists)"
     else
         # Create symlink
-        ln -s "$current_dir/$SOURCE_DIR/$file" "$target_path"
+        ln -s "$SOURCE_DIR/$file" "$target_path"
         if [ $? -eq 0 ]; then
             echo -e "${GREEN}LINKED:${NC}  dLabs-$file -> ~/.claude/agents/dLabs-$file"
         else
@@ -79,8 +80,7 @@ for file in *; do
     fi
 done
 
-# Return to original directory
-cd "$current_dir"
+# No need to change directories since we're using absolute paths
 
 echo
 echo "Summary:"

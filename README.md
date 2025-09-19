@@ -17,6 +17,7 @@ This repository combines the best Claude Code agents from multiple sources:
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed and configured
 - [GitHub CLI](https://cli.github.com/) (`gh`) for repository cloning
+- Ruby 3.0+ (for the enhanced CLI experience)
 - Git for repository management
 
 ### Installation
@@ -26,32 +27,59 @@ This repository combines the best Claude Code agents from multiple sources:
 git clone <your-repo-url>
 cd claude-agents
 
-# Run the complete installation
+# Install Ruby dependencies
+bundle install
+
+# Run the enhanced Ruby CLI installer (recommended)
+./bin/claude-agents install
+
+# Or use the legacy bash installer
 ./install.sh
 ```
 
+**🚀 The Ruby CLI provides:**
+- Interactive component selection
+- Beautiful colored output with progress indicators
+- System health diagnostics
+- Safe operations with confirmation prompts
+- Comprehensive error handling
+
 This will:
 
-1. Clone all external agent repositories
+1. Clone all external agent repositories into the `agents/` directory
 2. Set up organized symlinks in `~/.claude/agents/` and `~/.claude/commands/`
 3. Make all 200+ agents immediately available in Claude Code
 
 ### Manual Setup
 
-If you prefer individual setup:
-
+**Ruby CLI (Recommended):**
 ```bash
-# dallasLabs agents only
-./setup_agents.sh
+# Individual component setup
+./bin/claude-agents setup dlabs
+./bin/claude-agents setup wshobson-agents
+./bin/claude-agents setup wshobson-commands
+./bin/claude-agents setup awesome
+
+# Check installation status
+./bin/claude-agents status
+
+# System health check
+./bin/claude-agents doctor
+```
+
+**Legacy Bash Scripts:**
+```bash
+# dLabs agents only
+./bin/setup_agents.sh
 
 # wshobson agents
-./setup_wshobson_agents_symlinks.sh
+./bin/setup_wshobson_agents_symlinks.sh
 
 # wshobson commands
-./setup_wshobson_commands_symlinks.sh
+./bin/setup_wshobson_commands_symlinks.sh
 
 # Awesome Claude Code subagents
-./setup_awesome_agents_symlinks.sh
+./bin/setup_awesome_agents_symlinks.sh
 ```
 
 ## Agent Organization
@@ -142,18 +170,66 @@ The wshobson commands enable sophisticated multi-agent orchestration:
 /security-hardening "Secure the payment processing system"
 ```
 
-## Updating Collections
+## Repository Structure
 
-Keep all agent collections up to date:
+```
+claude-agents/
+├── bin/                                    # Scripts and executables
+│   ├── claude-agents                       # Ruby CLI (primary interface)
+│   ├── install.sh                          # Legacy bash installer
+│   ├── setup_agents.sh                     # dLabs agents setup
+│   ├── setup_wshobson_agents_symlinks.sh   # wshobson agents setup
+│   ├── setup_wshobson_commands_symlinks.sh # wshobson commands setup
+│   ├── setup_awesome_agents_symlinks.sh    # awesome agents setup
+│   └── remove_*.sh                         # Removal scripts
+├── lib/                                    # Ruby CLI implementation
+├── Gemfile                                 # Ruby dependencies
+└── agents/                                 # Agent collections (auto-created)
+    ├── dallasLabs/                         # Local agent definitions
+    ├── awesome-claude-code-subagents/      # VoltAgent collection
+    ├── wshobson-agents/                    # wshobson agent collection
+    └── wshobson-commands/                  # wshobson command collection
+```
+
+## CLI Interface
+
+### Ruby CLI Commands
 
 ```bash
+# Installation and setup
+./bin/claude-agents install                 # Interactive installation
+./bin/claude-agents setup <component>       # Setup specific component
+
+# Management
+./bin/claude-agents status                  # Show installation status
+./bin/claude-agents remove <component>      # Remove component
+./bin/claude-agents doctor                  # System health check
+
+# Information
+./bin/claude-agents version                 # Show version
+./bin/claude-agents help                    # Show help
+```
+
+## Updating Collections
+
+**Ruby CLI (Recommended):**
+```bash
+# Reinstall with latest updates
+./bin/claude-agents install
+
+# Or manually update repositories
+./bin/claude-agents doctor  # Check repository status
+```
+
+**Legacy Method:**
+```bash
 # Update all external repositories
-./install.sh
+./bin/install.sh
 
 # Or update individual collections
-cd awesome-claude-code-subagents && git pull && cd ..
-cd wshobson-agents && git pull && cd ..
-cd wshobson-commands && git pull && cd ..
+cd agents/awesome-claude-code-subagents && git pull && cd ../..
+cd agents/wshobson-agents && git pull && cd ../..
+cd agents/wshobson-commands && git pull && cd ../..
 ```
 
 ## Contributing

@@ -32,17 +32,30 @@ ask_removal() {
     local component="$1"
     local script="$2"
     if ask_yes_no "Would you like to remove existing $component symlinks first?"; then
-        if [ -f "$script" ]; then
+        if [ -f "$(dirname "$0")/$script" ]; then
             echo -e "${YELLOW}Removing existing $component symlinks...${NC}"
-            ./"$script"
+            "$(dirname "$0")/$script"
         else
-            echo -e "${RED}Warning: $script not found${NC}"
+            echo -e "${RED}Warning: $(dirname "$0")/$script not found${NC}"
         fi
     fi
 }
 
-echo -e "${BLUE}Interactive Claude Code Agent Installer${NC}"
-echo -e "${BLUE}=====================================${NC}"
+echo -e "${BLUE}Claude Code Agent Installer (Legacy)${NC}"
+echo -e "${BLUE}====================================${NC}"
+echo -e "${YELLOW}⚠️  This is the legacy bash installer.${NC}"
+echo -e "${YELLOW}⚠️  For the best experience, use the new Ruby CLI:${NC}"
+echo -e "${GREEN}   ./bin/claude-agents install${NC}"
+echo
+echo -e "${BLUE}Continue with legacy installer? [y/N]:${NC}"
+read -r continue_legacy
+case $continue_legacy in
+    [Yy]|[Yy][Ee][Ss]) ;;
+    *)
+        echo -e "${GREEN}Launching Ruby CLI installer...${NC}"
+        exec "$(dirname "$0")/claude-agents" install
+        ;;
+esac
 echo
 
 # Check for removal scripts and offer removal options
@@ -78,49 +91,52 @@ echo
 # Ask about dLabs agents
 if ask_yes_no "Install dLabs agents (local specialized agents)?"; then
     echo -e "${YELLOW}Setting up dLabs agents...${NC}"
-    ./setup_agents.sh
+    "$(dirname "$0")/setup_agents.sh"
     echo
 fi
 
+# Create agents directory if it doesn't exist
+mkdir -p agents
+
 # Ask about awesome-claude-code-subagents
 if ask_yes_no "Install awesome-claude-code-subagents (116 industry-standard agents)?"; then
-    if [ ! -d "awesome-claude-code-subagents" ]; then
+    if [ ! -d "agents/awesome-claude-code-subagents" ]; then
         echo -e "${YELLOW}Cloning awesome-claude-code-subagents...${NC}"
-        gh repo clone VoltAgent/awesome-claude-code-subagents awesome-claude-code-subagents
+        gh repo clone VoltAgent/awesome-claude-code-subagents agents/awesome-claude-code-subagents
     else
         echo -e "${YELLOW}awesome-claude-code-subagents already exists, pulling latest...${NC}"
-        cd awesome-claude-code-subagents && git pull && cd ..
+        cd agents/awesome-claude-code-subagents && git pull && cd ../..
     fi
     echo -e "${YELLOW}Setting up awesome-claude-code-subagents...${NC}"
-    ./setup_awesome_agents_symlinks.sh
+    "$(dirname "$0")/setup_awesome_agents_symlinks.sh"
     echo
 fi
 
 # Ask about wshobson agents
 if ask_yes_no "Install wshobson agents (82 production-ready agents)?"; then
-    if [ ! -d "wshobson-agents" ]; then
+    if [ ! -d "agents/wshobson-agents" ]; then
         echo -e "${YELLOW}Cloning wshobson-agents...${NC}"
-        gh repo clone wshobson/agents wshobson-agents
+        gh repo clone wshobson/agents agents/wshobson-agents
     else
         echo -e "${YELLOW}wshobson-agents already exists, pulling latest...${NC}"
-        cd wshobson-agents && git pull && cd ..
+        cd agents/wshobson-agents && git pull && cd ../..
     fi
     echo -e "${YELLOW}Setting up wshobson agents...${NC}"
-    ./setup_wshobson_agents_symlinks.sh
+    "$(dirname "$0")/setup_wshobson_agents_symlinks.sh"
     echo
 fi
 
 # Ask about wshobson commands
 if ask_yes_no "Install wshobson commands (56 workflow tools)?"; then
-    if [ ! -d "wshobson-commands" ]; then
+    if [ ! -d "agents/wshobson-commands" ]; then
         echo -e "${YELLOW}Cloning wshobson-commands...${NC}"
-        gh repo clone wshobson/commands wshobson-commands
+        gh repo clone wshobson/commands agents/wshobson-commands
     else
         echo -e "${YELLOW}wshobson-commands already exists, pulling latest...${NC}"
-        cd wshobson-commands && git pull && cd ..
+        cd agents/wshobson-commands && git pull && cd ../..
     fi
     echo -e "${YELLOW}Setting up wshobson commands...${NC}"
-    ./setup_wshobson_commands_symlinks.sh
+    "$(dirname "$0")/setup_wshobson_commands_symlinks.sh"
     echo
 fi
 

@@ -7,6 +7,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-09-19
+
+### Added
+
+#### Enhanced Ruby CLI System
+
+- **Ruby-based primary CLI** - Complete Thor-based CLI replacing bash as the primary interface
+- **Beautiful terminal UI** - Colorful output using TTY gems (pastel, tty-prompt, tty-spinner, tty-progressbar, tty-table, tty-box)
+- **Interactive installation** - Enhanced user experience with component selection and progress tracking
+- **System diagnostics** - `doctor` command for comprehensive health checks and troubleshooting
+- **Service-oriented architecture** - Modular Ruby design with dedicated service classes
+
+#### Organized Project Structure
+
+- **Centralized bin/ directory** - All scripts moved to `bin/` for better organization
+- **Unified agents/ directory** - All agent collections organized under `agents/` including dallasLabs
+- **Legacy script preservation** - Bash scripts maintained for backward compatibility
+- **Path-agnostic execution** - Scripts work correctly from any location
+
+#### Advanced Features
+
+- **Parallel operations** - Concurrent repository cloning and setup for faster installation
+- **Smart error handling** - Comprehensive error detection and recovery mechanisms
+- **Progress visualization** - Real-time progress bars and status indicators
+- **Component management** - Individual setup, removal, and status checking per component
+
+### Changed
+
+#### Primary Interface Migration
+
+- **Ruby CLI as default** - `./bin/claude-agents` is now the recommended primary interface
+- **Bash scripts relegated** - Legacy bash scripts moved to `bin/` and marked as secondary
+- **install.sh deprecation** - Legacy installer shows deprecation warning and redirects to Ruby CLI
+- **Documentation updates** - All examples updated to show Ruby CLI first
+
+#### Project Structure Reorganization
+
+- **dallasLabs relocation** - Moved from project root to `agents/dallasLabs` for consistency
+- **Script consolidation** - All executable scripts centralized in `bin/` directory
+- **Path updates** - All script references updated to work with new directory structure
+- **Configuration updates** - Ruby CLI configuration updated for new agent locations
+
+#### Enhanced User Experience
+
+- **Colored output everywhere** - Consistent color scheme across all interfaces
+- **Better progress feedback** - Spinner animations and progress bars for long operations
+- **Interactive prompts** - Improved TTY-based prompts with better validation
+- **Status visualization** - Beautiful table-based status displays
+
+### Technical Improvements
+
+- **Thor framework integration** - Professional CLI framework for robust command handling
+- **Service layer architecture** - Clean separation of concerns with dedicated service classes
+- **Configuration management** - Centralized configuration with validation and error handling
+- **Better error reporting** - Structured error messages with actionable guidance
+
+### Documentation
+
+- **README restructure** - Updated to show Ruby CLI prominently with legacy options secondary
+- **Repository structure** - Updated documentation reflecting new `bin/` and `agents/` organization
+- **CLI usage examples** - Comprehensive examples of new Ruby CLI commands
+- **Installation guides** - Clear primary (Ruby) and legacy (bash) installation paths
+
 ## [0.2.0] - 2025-09-19
 
 ### Added
