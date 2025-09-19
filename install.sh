@@ -45,7 +45,7 @@ echo
 echo -e "${YELLOW}Setting up symlinks...${NC}"
 
 # Run setup scripts
-echo "Setting up Dallas Labs agents..."
+echo "Setting up dallasLabs agents..."
 ./setup_agents.sh
 
 echo "Setting up wshobson agents..."
