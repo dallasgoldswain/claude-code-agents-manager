@@ -6,7 +6,7 @@ Thank you for your interest in contributing to the Claude Agents Collection! Thi
 
 - [Types of Contributions](#types-of-contributions)
 - [Getting Started](#getting-started)
-- [dallasLabs Agent Development](#dallas-labs-agent-development)
+- [dLabs Agent Development](#dlabs-agent-development)
 - [Setup Script Improvements](#setup-script-improvements)
 - [Documentation Updates](#documentation-updates)
 - [Reporting Issues](#reporting-issues)
@@ -17,7 +17,7 @@ Thank you for your interest in contributing to the Claude Agents Collection! Thi
 
 ### Welcome Contributions
 
-- New dallasLabs agents with specialized expertise
+- New dLabs agents with specialized expertise
 - Improvements to setup and installation scripts
 - Documentation enhancements and examples
 - Bug fixes and error handling improvements
@@ -63,11 +63,11 @@ For issues with external collections, please contribute directly to their reposi
    git checkout -b feature/your-feature-name
    ```
 
-## dallasLabs Agent Development
+## dLabs Agent Development
 
 ### Agent Structure
 
-All dallasLabs agents should follow this structure:
+All dLabs agents should follow this structure:
 
 ```markdown
 ---
@@ -111,7 +111,7 @@ When invoked:
 
 - File: `{domain}-{specialization}.md` (e.g., `rust-backend-engineer.md`)
 - Agent name in frontmatter: matches filename without extension
-- Symlink: `dallas-{filename}` (automatically prefixed)
+- Symlink: `dLabs-{filename}` (automatically prefixed)
 
 ### Testing New Agents
 
@@ -126,10 +126,10 @@ When invoked:
 
    ```bash
    # Verify agent is available
-   ls ~/.claude/agents/dallas-*
+   ls ~/.claude/agents/dLabs-*
 
    # Test agent invocation in Claude Code
-   @dallas-your-agent-name "test prompt"
+   @dLabs-your-agent-name "test prompt"
    ```
 
 ### Quality Standards
@@ -137,7 +137,7 @@ When invoked:
 - Agents should provide specialized, domain-specific expertise
 - Include modern best practices and current technology versions
 - Provide clear, actionable guidance
-- Maintain consistency with existing dallasLabs agent style
+- Maintain consistency with existing dLabs agent style
 - Test thoroughly before submitting
 
 ## Setup Script Improvements
@@ -156,7 +156,7 @@ Test setup scripts in clean environments:
 
 ```bash
 # Remove existing symlinks for testing
-rm -rf ~/.claude/agents/dallas-*
+rm -rf ~/.claude/agents/dLabs-*
 rm -rf ~/.claude/commands/wshobson-*
 
 # Test individual scripts
@@ -253,7 +253,7 @@ Use descriptive titles and provide:
 
 This repository focuses on:
 
-- dallasLabs agent development
+- dLabs agent development
 - Integration and management scripts
 - Documentation and organization
 - Installation and setup automation

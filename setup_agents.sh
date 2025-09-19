@@ -24,7 +24,7 @@ mkdir -p ~/.claude/agents
 # Array to store skipped files
 skipped_files=()
 
-echo "Setting up Dallas Labs agent symlinks to ~/.claude/agents..."
+echo "Setting up dLabs agent symlinks to ~/.claude/agents..."
 echo
 
 # Get current directory
@@ -60,21 +60,21 @@ for file in *; do
         continue
     fi
 
-    # Target symlink path with dallas prefix
-    target_path="$HOME/.claude/agents/dallas-$file"
+    # Target symlink path with dLabs prefix
+    target_path="$HOME/.claude/agents/dLabs-$file"
 
     # Check if symlink or file already exists
     if [ -L "$target_path" ] || [ -e "$target_path" ]; then
-        skipped_files+=("dallas-$file")
-        echo -e "${YELLOW}SKIPPED:${NC} dallas-$file (already exists)"
+        skipped_files+=("dLabs-$file")
+        echo -e "${YELLOW}SKIPPED:${NC} dLabs-$file (already exists)"
     else
         # Create symlink
         ln -s "$current_dir/$SOURCE_DIR/$file" "$target_path"
         if [ $? -eq 0 ]; then
-            echo -e "${GREEN}LINKED:${NC}  dallas-$file -> ~/.claude/agents/dallas-$file"
+            echo -e "${GREEN}LINKED:${NC}  dLabs-$file -> ~/.claude/agents/dLabs-$file"
         else
-            echo -e "${RED}ERROR:${NC}   Failed to create symlink for dallas-$file"
-            skipped_files+=("dallas-$file")
+            echo -e "${RED}ERROR:${NC}   Failed to create symlink for dLabs-$file"
+            skipped_files+=("dLabs-$file")
         fi
     fi
 done
@@ -111,4 +111,4 @@ fi
 
 echo
 echo -e "${GREEN}Setup complete!${NC}"
-echo "Your Dallas Labs agent files are now symlinked to ~/.claude/agents/"
+echo "Your dLabs agent files are now symlinked to ~/.claude/agents/"

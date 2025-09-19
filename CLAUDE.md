@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repository is a comprehensive agent management system that aggregates multiple Claude Code agent collections into a unified workspace. It combines:
 
-- **Dallas Labs agents** (`dallasLabs/`) - 5 specialized agents with focus on specific technologies
+- **dLabs agents** (`dallasLabs/`) - 5 specialized agents with focus on specific technologies
 - **wshobson agents** (82 agents) - Production-ready subagents covering full software development lifecycle
 - **awesome-claude-code-subagents** (116 agents) - Industry-standard subagents organized by domain
 - **wshobson commands** (56 commands) - Workflows and tools for multi-agent orchestration
@@ -25,12 +25,12 @@ The content includes specialized instructions, checklists, and behavior patterns
 
 ### Agent Collections Structure
 
-**Dallas Labs Agents** (`dallasLabs/` → `~/.claude/agents/dallas-*`)
-- `dallas-django-developer.md` - Django 5+ with modern Python practices
-- `dallas-js-ts-tech-lead.md` - JavaScript/TypeScript technical leadership
-- `dallas-data-analysis-expert.md` - Data analysis and visualization
-- `dallas-python-backend-engineer.md` - Python backend development
-- `dallas-debug-specialist.md` - Debugging and troubleshooting
+**dLabs Agents** (`dallasLabs/` → `~/.claude/agents/dLabs-*`)
+- `dLabs-django-developer.md` - Django 5+ with modern Python practices
+- `dLabs-js-ts-tech-lead.md` - JavaScript/TypeScript technical leadership
+- `dLabs-data-analysis-expert.md` - Data analysis and visualization
+- `dLabs-python-backend-engineer.md` - Python backend development
+- `dLabs-debug-specialist.md` - Debugging and troubleshooting
 
 **External Collections** (prefixed by source)
 - `wshobson-*` - 82 production-ready agents covering architecture, languages, domains
@@ -46,7 +46,7 @@ The content includes specialized instructions, checklists, and behavior patterns
 
 ### Individual Setup Scripts
 ```bash
-# Dallas Labs agents
+# dLabs agents
 ./setup_agents.sh
 
 # wshobson agents (with wshobson- prefix)
@@ -70,17 +70,17 @@ cd wshobson-commands && git pull && cd ..
 ## Agent Organization
 
 ### Destination Structure
-- **Agents**: `~/.claude/agents/` with source prefixes (dallas-, wshobson-, category-)
+- **Agents**: `~/.claude/agents/` with source prefixes (dLabs-, wshobson-, category-)
 - **Commands**: `~/.claude/commands/tools/` and `~/.claude/commands/workflows/`
 
 ### Naming Conventions
-- Dallas Labs: `dallas-{agent-name}.md`
+- dLabs: `dLabs-{agent-name}.md`
 - wshobson: `wshobson-{agent-name}.md`
 - External: `{category}-{agent-name}.md`
 
 ## Development Workflow
 
-### Adding New Dallas Labs Agents
+### Adding New dLabs Agents
 1. Create agent definition in `dallasLabs/` with YAML frontmatter
 2. Run `./setup_agents.sh` to create symlinks
 3. Test agent through Claude Code interface

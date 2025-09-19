@@ -60,7 +60,7 @@ If you prefer individual setup:
 
 All agents are prefixed by their source for easy identification:
 
-- `dallas-*` - dallasLabs agents (local)
+- `dLabs-*` - dLabs agents (local)
 - `wshobson-*` - wshobson collection agents
 - `{category}-*` - Awesome Claude Code subagents (e.g., `data-ai-ml-engineer`)
 
@@ -69,7 +69,7 @@ All agents are prefixed by their source for easy identification:
 ```
 ~/.claude/
 ├── agents/                     # All agents (200+)
-│   ├── dallas-*               # dallasLabs (5)
+│   ├── dLabs-*                # dLabs (5)
 │   ├── wshobson-*             # wshobson agents (82)
 │   └── {category}-*           # Categorized agents (116)
 └── commands/                   # Automation tools
@@ -128,7 +128,7 @@ The wshobson commands enable sophisticated multi-agent orchestration:
 
 ```bash
 # In Claude Code, invoke agents by name:
-@dallas-django-developer "Help me optimize this Django view"
+@dLabs-django-developer "Help me optimize this Django view"
 @wshobson-security-auditor "Review this authentication code"
 @data-ai-ml-engineer "Design a machine learning pipeline"
 ```
@@ -160,7 +160,7 @@ cd wshobson-commands && git pull && cd ..
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
 
-- Adding new dallasLabs agents
+- Adding new dLabs agents
 - Reporting issues with external collections
 - Improving setup scripts and documentation
 
