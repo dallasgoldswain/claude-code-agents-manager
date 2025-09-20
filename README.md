@@ -38,11 +38,12 @@ bundle install
 ```
 
 **🚀 The Ruby CLI provides:**
-- Interactive component selection
+- Interactive component selection with multi-select menu
 - Beautiful colored output with progress indicators
-- System health diagnostics
+- System health diagnostics via `doctor` command
 - Safe operations with confirmation prompts
-- Comprehensive error handling
+- Comprehensive error handling with graceful fallbacks
+- Complete command suite: `install`, `setup`, `remove`, `status`, `doctor`, `version`
 
 This will:
 
@@ -63,8 +64,12 @@ This will:
 # Check installation status
 ./bin/claude-agents status
 
-# System health check
+# System health check and diagnostics
 ./bin/claude-agents doctor
+
+# Remove components
+./bin/claude-agents remove dlabs
+./bin/claude-agents remove --force  # Skip confirmations
 ```
 
 **Legacy Bash Scripts:**
@@ -231,6 +236,24 @@ cd agents/awesome-claude-code-subagents && git pull && cd ../..
 cd agents/wshobson-agents && git pull && cd ../..
 cd agents/wshobson-commands && git pull && cd ../..
 ```
+
+## Recent Improvements (v0.3.0)
+
+### Enhanced CLI Reliability
+- **Fixed all command registration issues** - All CLI commands now work consistently
+- **Improved error handling** - Graceful fallbacks for table rendering and component validation
+- **Better path resolution** - Fixed directory detection and configuration access
+- **RuboCop compliance** - Clean, maintainable code following Ruby best practices
+
+### System Diagnostics
+- **`doctor` command** - Comprehensive health checks for repositories, directories, and dependencies
+- **Status monitoring** - Real-time installation status with detailed component information
+- **Error recovery** - Automatic detection and suggestions for common issues
+
+### Developer Experience
+- **Modular architecture** - Clean separation of concerns with service classes
+- **Better documentation** - Updated guides and comprehensive help system
+- **Interactive workflows** - Multi-select menus and confirmation prompts
 
 ## Contributing
 
