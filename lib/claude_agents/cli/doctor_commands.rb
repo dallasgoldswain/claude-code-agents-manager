@@ -31,7 +31,7 @@ module ClaudeAgents
 
       def doctor
         configure_ui
-        Doctor::Runner.new(ui).call
+        CLI::Doctor::Runner.new(ui).call
       rescue StandardError => e
         ErrorHandler.handle_error(e, ui)
       end

@@ -9,7 +9,7 @@ module ClaudeAgents
           def call
             ui.subsection('Checking repositories')
 
-            Config::REPOSITORIES.each_value { |repo| report_repository_status(repo) }
+            Config::Repositories::REPOSITORIES.each_value { |repo| report_repository_status(repo) }
             report_dlabs_directory_status
           end
 

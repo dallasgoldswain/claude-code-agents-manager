@@ -21,7 +21,8 @@ module ClaudeAgents
         loader = Zeitwerk::Loader.for_gem
         loader.inflector.inflect(
           'cli' => 'CLI',
-          'ui' => 'UI'
+          'ui' => 'UI',
+          'ui_components' => 'UIComponents'
         )
         loader.setup
         loader

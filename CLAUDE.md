@@ -71,7 +71,7 @@ bundle install
 
 **Code Quality:**
 ```bash
-# Run RuboCop linting
+# Run RuboCop linting (required before commits)
 bundle exec rubocop
 
 # Auto-fix RuboCop issues
@@ -79,6 +79,20 @@ bundle exec rubocop -a
 
 # Run RSpec tests (when available)
 bundle exec rspec
+```
+
+**Testing and Debugging:**
+```bash
+# Test specific commands
+./bin/claude-agents doctor    # System health diagnostics
+./bin/claude-agents status    # Component installation status
+./bin/claude-agents version   # Version and component info
+
+# Debug CLI loading issues
+DEBUG=1 ./bin/claude-agents <command>
+
+# Ruby console for debugging
+bundle exec pry
 ```
 
 ### Legacy Bash Scripts
@@ -127,7 +141,13 @@ cd agents/wshobson-commands && git pull && cd ../..
 The Ruby CLI is built using a service-oriented architecture with Thor framework:
 
 - **`CLI`** - Main Thor-based CLI interface in `lib/claude_agents/cli.rb`
-- **`Config`** - Centralized configuration management in `lib/claude_agents/config.rb`
+  - Commands are defined directly in the main CLI class (not in modules due to Thor autoloading issues)
+  - Uses `exit_on_failure?` method to suppress Thor deprecation warnings
+- **`Config`** - Centralized configuration management using module extension pattern
+  - `Config::Directories` - Path management (`project_root` uses `../../..` from config dir)
+  - `Config::Components` - Component definitions with source/destination mappings
+  - `Config::Repositories` - External repository URLs and metadata
+  - `Config::SkipPatterns` - File filtering rules
 - **Service Classes:**
   - `Installer` - Handles component installation and repository cloning
   - `Remover` - Manages component removal and cleanup
@@ -135,6 +155,7 @@ The Ruby CLI is built using a service-oriented architecture with Thor framework:
   - `FileProcessor` - Processes individual files and applies naming conventions
   - `UI` - TTY-based user interface with colored output and progress indicators
 - **Error Classes:** Structured exception handling with specialized error types
+- **Doctor System:** Modular health check system in `cli/doctor/` with individual check classes
 
 ### Component Configuration
 Components are defined in `lib/claude_agents/config.rb` with:
@@ -156,11 +177,17 @@ Components are defined in `lib/claude_agents/config.rb` with:
 3. Existing symlinks are preserved unless explicitly recreated
 
 **Code Development:**
-- Follow Ruby style guide (enforced by RuboCop if configured)
+- Follow Ruby style guide (enforced by RuboCop)
 - Service classes handle specific responsibilities
 - UI class provides consistent user experience with TTY gems
 - Error classes provide structured exception handling
 - Zeitwerk for autoloading and namespace management
+
+**Critical Architecture Notes:**
+- Thor command registration timing issues: Commands must be defined directly in CLI class, not in included modules
+- `Config.project_root` path calculation is critical - it determines where doctor checks look for directories
+- Repository status checks reference `Config::Repositories::REPOSITORIES` constant
+- Doctor system uses modular check classes that inherit from `BaseCheck`
 
 ### Multi-Agent Orchestration
 - wshobson commands enable complex multi-agent workflows

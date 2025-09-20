@@ -25,7 +25,7 @@ module ClaudeAgents
       end
 
       def project_root
-        @project_root ||= File.expand_path('../..', __dir__)
+        @project_root ||= File.expand_path('../../..', __dir__)
       end
 
       def agents_source_dir
