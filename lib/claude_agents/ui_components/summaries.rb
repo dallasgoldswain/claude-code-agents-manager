@@ -33,11 +33,11 @@ module ClaudeAgents
         info = Config.component_info(component)
 
         [
-          info[:name],
+          info[:name] || component.to_s,
           summary_status_label(result[:success]),
-          result[:total_files].to_s,
-          result[:created_links].to_s,
-          result[:skipped_files].to_s
+          (result[:total_files] || 0).to_s,
+          (result[:created_links] || 0).to_s,
+          (result[:skipped_files] || 0).to_s
         ]
       end
 
@@ -51,10 +51,10 @@ module ClaudeAgents
         info = Config.component_info(component)
 
         [
-          info[:name],
+          info[:name] || component.to_s,
           summary_status_label(result[:success]),
-          result[:removed_count].to_s,
-          result[:error_count].to_s
+          (result[:removed_count] || 0).to_s,
+          (result[:error_count] || 0).to_s
         ]
       end
 

@@ -3,7 +3,8 @@
     "allow": [
       "Bash(./bin/claude-agents:*)",
       "Bash(ruby:*)",
-      "Bash(DEBUG=1 ./bin/claude-agents doctor)"
+      "Bash(DEBUG=1 ./bin/claude-agents doctor)",
+      "Bash(bundle exec rubocop:*)"
     ],
     "deny": [],
     "ask": []

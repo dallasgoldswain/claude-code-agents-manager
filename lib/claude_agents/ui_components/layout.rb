@@ -38,8 +38,35 @@ module ClaudeAgents
       end
 
       def summary_table(data)
-        table = TTY::Table.new { |t| data.each { |row| t << row } }
+        render_table(sanitized_rows(data))
+      rescue StandardError
+        render_table_fallback(data)
+      end
+
+      def sanitized_rows(data)
+        data.map do |row|
+          if row == :separator
+            row
+          else
+            row.map { |cell| cell.nil? ? '' : cell.to_s }
+          end
+        end
+      end
+
+      def render_table(rows)
+        table = TTY::Table.new { |t| rows.each { |row| t << row } }
         puts table.render(:unicode, padding: [0, 1])
+      end
+
+      def render_table_fallback(data)
+        puts 'Table rendering failed, displaying simple format:'
+        newline
+
+        data.each do |row|
+          next if row == :separator
+
+          puts row.join(' | ')
+        end
       end
     end
   end

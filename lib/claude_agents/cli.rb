@@ -9,6 +9,7 @@ module ClaudeAgents
     include RemoveCommands
     include StatusCommands
     include DoctorCommands
+    include Helpers
 
     class_option :verbose, type: :boolean, aliases: '-v', desc: 'Enable verbose output'
     class_option :no_color, type: :boolean, desc: 'Disable colored output'
@@ -27,16 +28,8 @@ module ClaudeAgents
       true
     end
 
+    # Command definitions with minimal implementations
     desc 'doctor', 'Check system health and dependencies'
-    long_desc <<~DESC
-      Run system diagnostics to check:
-      • GitHub CLI availability and authentication
-      • Directory permissions
-      • Symlink integrity
-      • Repository status
-
-      Use this command to troubleshoot installation issues.
-    DESC
     def doctor
       configure_ui
       CLI::Doctor::Runner.new(ui).call
@@ -45,17 +38,6 @@ module ClaudeAgents
     end
 
     desc 'status', 'Show installation status of all components'
-    long_desc <<~DESC
-      Display a comprehensive status report showing:
-      • Which components are currently installed
-      • Number of agents/commands for each component
-      • Installation paths and symlink health
-
-      This is useful for:
-      • Checking what's currently installed
-      • Debugging installation issues
-      • Getting an overview before making changes
-    DESC
     def status
       configure_ui
       ui.display_status
@@ -77,19 +59,37 @@ module ClaudeAgents
       puts 'GitHub: https://github.com/dallasgoldswain/claude-code-agents-manager'
     end
 
-    private
-
-    def configure_ui
-      return unless options[:no_color]
-
-      ui.pastel.enabled = false
+    desc 'install', 'Interactive installation of Claude Code agents'
+    option :component, type: :string, aliases: '-c'
+    option :yes, type: :boolean, aliases: '-y'
+    option :force, type: :boolean, aliases: '-f'
+    def install
+      configure_ui
+      installer = Installer.new(ui)
+      handle_install_request(installer)
+    rescue StandardError => e
+      ErrorHandler.handle_error(e, ui)
     end
 
-    def validate_component!(component)
-      return if Config.valid_component?(component)
+    desc 'setup COMPONENT', 'Setup specific component'
+    def setup(component)
+      configure_ui
+      validate_component!(component)
+      installer = Installer.new(ui)
+      result = installer.install_component(component)
+      report_setup_result(component, result)
+    rescue StandardError => e
+      ErrorHandler.handle_error(e, ui)
+    end
 
-      available = Config.all_components.join(', ')
-      raise ValidationError, "Invalid component: #{component}. Available: #{available}"
+    desc 'remove [COMPONENT]', 'Remove installed agents'
+    option :force, type: :boolean, aliases: '-f'
+    def remove(component = nil)
+      configure_ui
+      remover = Remover.new(ui)
+      handle_remove_component(remover, component)
+    rescue StandardError => e
+      ErrorHandler.handle_error(e, ui)
     end
   end
 end

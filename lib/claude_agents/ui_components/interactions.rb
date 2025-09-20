@@ -23,7 +23,7 @@ module ClaudeAgents
       end
 
       def component_selection_menu
-        choices = Config::COMPONENTS.map do |key, info|
+        choices = Config::Components::COMPONENTS.map do |key, info|
           { name: component_choice_text(key, info), value: key }
         end
 
