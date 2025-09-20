@@ -40,3 +40,5 @@ pids
 # Temporary files
 tmp/
 temp/
+
+coverage

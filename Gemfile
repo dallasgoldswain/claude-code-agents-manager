@@ -16,7 +16,14 @@ gem 'zeitwerk', '~> 2.6'
 
 group :development, :test do
   gem 'pry', '~> 0.14'
-  gem 'rspec', '~> 3.12'
   gem 'rubocop', '~> 1.56'
-  gem 'rubocop-rspec', '~> 2.24'
+
+  # Testing gems
+  gem 'minitest', '~> 5.20'
+  gem 'minitest-reporters', '~> 1.6'
+  gem 'minitest-focus', '~> 1.4'
+  gem 'mocha', '~> 2.1'
+  gem 'simplecov', '~> 0.22'
+  gem 'webmock', '~> 3.19'
+  gem 'fakefs', '~> 2.5'
 end
