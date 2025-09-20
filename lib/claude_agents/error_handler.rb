@@ -1,28 +1,11 @@
 # frozen_string_literal: true
 
 module ClaudeAgents
-  # Custom error classes for better error handling and user experience
-  class Error < StandardError
-    attr_reader :code, :details
-
-    def initialize(message, code: nil, details: nil)
-      super(message)
-      @code = code
-      @details = details
-    end
-  end
-
-  class InstallationError < Error; end
-  class RemovalError < Error; end
-  class FileOperationError < Error; end
-  class ValidationError < Error; end
-  class RepositoryError < Error; end
-  class SymlinkError < Error; end
-  class UserCancelledError < Error; end
-
-  # Error handling utility methods
+  # Error handling utility methods shared across the CLI
   module ErrorHandler
-    def self.handle_error(error, ui)
+    module_function
+
+    def handle_error(error, ui)
       case error
       when UserCancelledError
         ui.info 'Operation cancelled by user.'

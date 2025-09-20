@@ -28,7 +28,8 @@ module ClaudeAgents
         count: 5,
         source_dir: 'agents/dallasLabs',
         prefix: 'dLabs-',
-        destination: :agents
+        destination: :agents,
+        processor: :prefixed
       },
       awesome: {
         name: 'awesome-claude-code-subagents',
@@ -36,7 +37,8 @@ module ClaudeAgents
         count: 116,
         source_dir: 'agents/awesome-claude-code-subagents',
         prefix: nil, # Category-based
-        destination: :agents
+        destination: :agents,
+        processor: :awesome
       },
       wshobson_agents: {
         name: 'wshobson agents',
@@ -44,7 +46,8 @@ module ClaudeAgents
         count: 82,
         source_dir: 'agents/wshobson-agents',
         prefix: 'wshobson-',
-        destination: :agents
+        destination: :agents,
+        processor: :prefixed
       },
       wshobson_commands: {
         name: 'wshobson commands',
@@ -52,9 +55,19 @@ module ClaudeAgents
         count: 56,
         source_dir: 'agents/wshobson-commands',
         prefix: nil,
-        destination: :commands
+        destination: :commands,
+        processor: :wshobson_commands
       }
     }.freeze
+
+    SKIP_PATTERNS = [
+      /^readme/i,
+      /^license/i,
+      /^contributing/i,
+      /^examples/i,
+      /^setup_.*\.sh$/,
+      /^\./
+    ].freeze
 
     class << self
       def claude_dir
@@ -125,7 +138,7 @@ module ClaudeAgents
       end
 
       def skip_file?(filename)
-        ClaudeAgents::CONFIG[:skip_patterns].any? { |pattern| filename.match?(pattern) }
+        SKIP_PATTERNS.any? { |pattern| filename.match?(pattern) }
       end
 
       def valid_component?(component)
@@ -138,6 +151,10 @@ module ClaudeAgents
 
       def component_info(component)
         COMPONENTS[component.to_sym]
+      end
+
+      def allowed_symlink_roots
+        [agents_dir, commands_dir, tools_dir, workflows_dir].map { |dir| File.expand_path(dir) }.uniq
       end
     end
   end

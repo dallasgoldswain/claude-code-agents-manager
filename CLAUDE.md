@@ -11,7 +11,7 @@ This repository is a comprehensive agent management system that aggregates multi
 - **awesome-claude-code-subagents** (116 agents) - Industry-standard subagents organized by domain
 - **wshobson commands** (56 commands) - Workflows and tools for multi-agent orchestration
 
-The repository provides both a modern Ruby CLI and legacy bash scripts to clone external repositories and create organized symlink structures for seamless Claude Code integration.
+The repository provides both a modern Ruby CLI (primary) and legacy bash scripts to clone external repositories and create organized symlink structures for seamless Claude Code integration.
 
 ## Agent Architecture
 
@@ -126,7 +126,7 @@ cd agents/wshobson-commands && git pull && cd ../..
 ### Ruby CLI Architecture
 The Ruby CLI is built using a service-oriented architecture with Thor framework:
 
-- **`ClaudeAgentsCLI`** - Main Thor-based CLI interface in `lib/claude_agents_cli.rb`
+- **`CLI`** - Main Thor-based CLI interface in `lib/claude_agents/cli.rb`
 - **`Config`** - Centralized configuration management in `lib/claude_agents/config.rb`
 - **Service Classes:**
   - `Installer` - Handles component installation and repository cloning
@@ -134,6 +134,7 @@ The Ruby CLI is built using a service-oriented architecture with Thor framework:
   - `SymlinkManager` - Creates and manages symlinks between source and destination
   - `FileProcessor` - Processes individual files and applies naming conventions
   - `UI` - TTY-based user interface with colored output and progress indicators
+- **Error Classes:** Structured exception handling with specialized error types
 
 ### Component Configuration
 Components are defined in `lib/claude_agents/config.rb` with:
@@ -155,10 +156,11 @@ Components are defined in `lib/claude_agents/config.rb` with:
 3. Existing symlinks are preserved unless explicitly recreated
 
 **Code Development:**
-- Follow Ruby style guide (RuboCop configured)
+- Follow Ruby style guide (enforced by RuboCop if configured)
 - Service classes handle specific responsibilities
-- UI class provides consistent user experience
+- UI class provides consistent user experience with TTY gems
 - Error classes provide structured exception handling
+- Zeitwerk for autoloading and namespace management
 
 ### Multi-Agent Orchestration
 - wshobson commands enable complex multi-agent workflows
@@ -174,8 +176,15 @@ Components are defined in `lib/claude_agents/config.rb` with:
 │   └── setup_*.sh                          # Legacy setup scripts
 ├── lib/                                    # Ruby CLI implementation
 │   ├── claude_agents.rb                    # Main module and version
-│   ├── claude_agents_cli.rb                # Thor CLI interface
-│   └── claude_agents/                      # Service classes
+│   └── claude_agents/                      # Service classes and modules
+│       ├── cli.rb                          # Thor CLI interface
+│       ├── config.rb                       # Configuration management
+│       ├── installer.rb                    # Installation service
+│       ├── remover.rb                      # Removal service
+│       ├── symlink_manager.rb              # Symlink operations
+│       ├── file_processor.rb               # File filtering and processing
+│       ├── ui.rb                           # User interface with TTY gems
+│       └── error*.rb                       # Error classes
 ├── agents/                                 # Agent collections (auto-created)
 │   ├── dallasLabs/                         # Local agent definitions
 │   ├── awesome-claude-code-subagents/      # External: VoltAgent collection

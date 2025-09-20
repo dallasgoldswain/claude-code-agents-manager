@@ -30,36 +30,20 @@ module ClaudeAgents
          .reject { |file| should_skip_file?(file) }
     end
 
-    def process_dlabs_files(source_dir)
+    def process_prefixed_files(source_dir, destination_root:, prefix: nil)
       return [] unless Dir.exist?(source_dir)
 
-      files = Dir.glob(File.join(source_dir, '*'))
-                 .select { |file| File.file?(file) }
-                 .reject { |file| should_skip_file?(file) }
-
-      files.map do |file|
+      Dir.glob(File.join(source_dir, '*'))
+         .select { |file| File.file?(file) }
+         .reject { |file| should_skip_file?(file) }
+         .map do |file|
         filename = File.basename(file)
+        display_name = [prefix, filename].compact.join
+
         {
           source: file,
-          destination: File.join(Config.agents_dir, "dLabs-#{filename}"),
-          display_name: "dLabs-#{filename}"
-        }
-      end
-    end
-
-    def process_wshobson_agent_files(source_dir)
-      return [] unless Dir.exist?(source_dir)
-
-      files = Dir.glob(File.join(source_dir, '*'))
-                 .select { |file| File.file?(file) }
-                 .reject { |file| should_skip_file?(file) }
-
-      files.map do |file|
-        filename = File.basename(file)
-        {
-          source: file,
-          destination: File.join(Config.agents_dir, "wshobson-#{filename}"),
-          display_name: "wshobson-#{filename}"
+          destination: File.join(destination_root, display_name),
+          display_name: display_name
         }
       end
     end
@@ -134,10 +118,10 @@ module ClaudeAgents
 
         # Create flattened filename with category prefix
         flattened_filename = if category_name != '.'
-          "#{category_name}-#{filename}"
-        else
-          filename
-        end
+                               "#{category_name}-#{filename}"
+                             else
+                               filename
+                             end
 
         file_mappings << {
           source: file,
@@ -166,19 +150,26 @@ module ClaudeAgents
     end
 
     def get_file_mappings_for_component(component)
+      component = component.to_sym
+      info = Config.component_info(component)
+      raise ValidationError, "Unknown component: #{component}" unless info
+
       source_dir = validate_source_directory(component)
 
-      case component.to_sym
-      when :dlabs
-        process_dlabs_files(source_dir)
-      when :wshobson_agents
-        process_wshobson_agent_files(source_dir)
+      case info[:processor]
+      when :prefixed
+        destination_dir = Config.destination_dir_for(component)
+        process_prefixed_files(
+          source_dir,
+          destination_root: destination_dir,
+          prefix: info[:prefix]
+        )
       when :wshobson_commands
         process_wshobson_command_files(source_dir)
       when :awesome
         process_awesome_agent_files(source_dir)
       else
-        raise ValidationError, "Unknown component: #{component}"
+        raise ValidationError, "Unknown processor for component: #{component}"
       end
     end
 
@@ -186,13 +177,9 @@ module ClaudeAgents
       source = mapping[:source]
       destination = mapping[:destination]
 
-      unless File.exist?(source)
-        raise FileOperationError, "Source file does not exist: #{source}"
-      end
+      raise FileOperationError, "Source file does not exist: #{source}" unless File.exist?(source)
 
-      unless File.readable?(source)
-        raise FileOperationError, "Source file is not readable: #{source}"
-      end
+      raise FileOperationError, "Source file is not readable: #{source}" unless File.readable?(source)
 
       # Ensure destination directory exists
       dest_dir = File.dirname(destination)

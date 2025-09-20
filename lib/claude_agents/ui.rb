@@ -36,7 +36,7 @@ module ClaudeAgents
     end
 
     def separator
-      puts pastel.dim("─" * 80)
+      puts pastel.dim('─' * 80)
     end
 
     def newline
@@ -45,24 +45,24 @@ module ClaudeAgents
 
     # Status indicators
     def linked(message)
-      puts pastel.green("  LINKED: ") + message
+      puts pastel.green('  LINKED: ') + message
     end
 
     def skipped(message)
-      puts pastel.yellow("  SKIPPED: ") + message
+      puts pastel.yellow('  SKIPPED: ') + message
     end
 
     def removed(message)
-      puts pastel.red("  REMOVED: ") + message
+      puts pastel.red('  REMOVED: ') + message
     end
 
     def processing(message)
-      puts pastel.blue("  PROCESSING: ") + message
+      puts pastel.blue('  PROCESSING: ') + message
     end
 
     # Interactive prompts
     def confirm(message, default: false)
-      prompt.yes?(pastel.cyan("#{message}"), default: default)
+      prompt.yes?(pastel.cyan(message.to_s), default: default)
     rescue TTY::Reader::InputInterrupt
       raise UserCancelledError, 'User cancelled operation'
     end
@@ -101,7 +101,7 @@ module ClaudeAgents
     def section(message)
       puts
       puts pastel.bright_blue.bold("▶ #{message}")
-      puts pastel.dim("─" * (message.length + 2))
+      puts pastel.dim('─' * (message.length + 2))
     end
 
     def subsection(message)
@@ -235,23 +235,23 @@ module ClaudeAgents
         status = installed ? pastel.green('✅ Installed') : pastel.dim('⭕ Not Installed')
 
         file_count = if installed
-          case component
-          when :dlabs
-            Dir.glob(File.join(Config.agents_dir, 'dLabs-*')).length
-          when :wshobson_agents
-            Dir.glob(File.join(Config.agents_dir, 'wshobson-*')).length
-          when :wshobson_commands
-            Dir.glob(File.join(Config.commands_dir, '**/*')).length
-          when :awesome
-            Dir.glob(File.join(Config.agents_dir, '*-*'))
-               .reject { |path| File.basename(path).start_with?('dLabs-', 'wshobson-') }
-               .length
-          else
-            0
-          end
-        else
-          0
-        end
+                       case component
+                       when :dlabs
+                         Dir.glob(File.join(Config.agents_dir, 'dLabs-*')).length
+                       when :wshobson_agents
+                         Dir.glob(File.join(Config.agents_dir, 'wshobson-*')).length
+                       when :wshobson_commands
+                         Dir.glob(File.join(Config.commands_dir, '**/*')).length
+                       when :awesome
+                         Dir.glob(File.join(Config.agents_dir, '*-*'))
+                            .reject { |path| File.basename(path).start_with?('dLabs-', 'wshobson-') }
+                            .length
+                       else
+                         0
+                       end
+                     else
+                       0
+                     end
 
         status_data << [info[:name], status, file_count.to_s]
       end

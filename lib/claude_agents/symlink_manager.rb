@@ -13,56 +13,54 @@ module ClaudeAgents
     def create_symlink(source, destination, display_name = nil)
       display_name ||= File.basename(destination)
 
-      # Validate source exists
-      unless File.exist?(source)
-        raise SymlinkError, "Source file does not exist: #{source}"
-      end
+      absolute_source = File.expand_path(source)
+      raise SymlinkError, "Source file does not exist: #{source}" unless File.exist?(absolute_source)
 
-      # Ensure destination directory exists
-      dest_dir = File.dirname(destination)
+      absolute_destination = validate_managed_path!(destination)
+
+      dest_dir = File.dirname(absolute_destination)
       FileUtils.mkdir_p(dest_dir) unless Dir.exist?(dest_dir)
 
-      # Check if destination already exists
-      if File.exist?(destination) || File.symlink?(destination)
+      if File.exist?(absolute_destination) || File.symlink?(absolute_destination)
         return { status: :skipped, reason: 'already exists', display_name: display_name }
       end
 
-      # Create the symlink
       begin
-        # Convert to absolute path for source
-        absolute_source = File.expand_path(source)
-        File.symlink(absolute_source, destination)
+        File.symlink(absolute_source, absolute_destination)
 
         ui.linked(display_name)
         { status: :created, display_name: display_name }
       rescue Errno::EEXIST
         { status: :skipped, reason: 'file exists', display_name: display_name }
       rescue Errno::EACCES
-        raise SymlinkError, "Permission denied creating symlink: #{destination}"
+        raise SymlinkError, "Permission denied creating symlink: #{absolute_destination}"
       rescue StandardError => e
-        raise SymlinkError, "Failed to create symlink #{destination}: #{e.message}"
+        raise SymlinkError, "Failed to create symlink #{absolute_destination}: #{e.message}"
       end
     end
 
     # Remove symlink with validation
     def remove_symlink(path, display_name = nil)
       display_name ||= File.basename(path)
+      absolute_path = File.expand_path(path)
+      validate_managed_path!(absolute_path)
 
-      unless File.exist?(path) || File.symlink?(path)
-        return { status: :not_found, display_name: display_name }
+      unless File.exist?(absolute_path) || File.symlink?(absolute_path)
+        return { status: :not_found,
+                 display_name: display_name }
       end
 
-      if File.symlink?(path)
+      if File.symlink?(absolute_path)
         begin
-          File.unlink(path)
+          File.unlink(absolute_path)
           ui.removed(display_name)
           { status: :removed, display_name: display_name }
         rescue Errno::EACCES
-          raise SymlinkError, "Permission denied removing symlink: #{path}"
+          raise SymlinkError, "Permission denied removing symlink: #{absolute_path}"
         rescue StandardError => e
-          raise SymlinkError, "Failed to remove symlink #{path}: #{e.message}"
+          raise SymlinkError, "Failed to remove symlink #{absolute_path}: #{e.message}"
         end
-      elsif File.file?(path)
+      elsif File.file?(absolute_path)
         ui.skipped("#{display_name} (not a symlink)")
         { status: :skipped, reason: 'not a symlink', display_name: display_name }
       else
@@ -78,10 +76,11 @@ module ClaudeAgents
       results = []
       created_count = 0
       skipped_count = 0
+      deferred_skips = []
 
       progress_bar = if show_progress && file_mappings.length > 5
-        ui.progress_bar('Creating symlinks', file_mappings.length)
-      end
+                       ui.progress_bar('Creating symlinks', file_mappings.length)
+                     end
 
       file_mappings.each do |mapping|
         result = create_symlink(mapping[:source], mapping[:destination], mapping[:display_name])
@@ -92,7 +91,12 @@ module ClaudeAgents
           created_count += 1
         when :skipped
           skipped_count += 1
-          ui.skipped("#{result[:display_name]} (#{result[:reason]})")
+          message = "#{result[:display_name]} (#{result[:reason]})"
+          if progress_bar
+            deferred_skips << message
+          else
+            ui.skipped(message)
+          end
         end
 
         progress_bar&.advance
@@ -101,7 +105,8 @@ module ClaudeAgents
         results << { status: :error, display_name: mapping[:display_name], error: e.message }
       end
 
-      progress_bar&.finish if progress_bar
+      progress_bar&.finish
+      deferred_skips.each { |message| ui.skipped(message) }
 
       {
         total_files: file_mappings.length,
@@ -127,21 +132,19 @@ module ClaudeAgents
       error_count = 0
 
       symlinks.each do |symlink_path|
-        begin
-          result = remove_symlink(symlink_path)
-          results << result
+        result = remove_symlink(symlink_path)
+        results << result
 
-          case result[:status]
-          when :removed
-            removed_count += 1
-          when :not_found
-            # Don't count as error, just skip
-          end
-        rescue SymlinkError => e
-          ui.error("Failed to remove #{File.basename(symlink_path)}: #{e.message}")
-          results << { status: :error, display_name: File.basename(symlink_path), error: e.message }
-          error_count += 1
+        case result[:status]
+        when :removed
+          removed_count += 1
+        when :not_found
+          # Don't count as error, just skip
         end
+      rescue SymlinkError => e
+        ui.error("Failed to remove #{File.basename(symlink_path)}: #{e.message}")
+        results << { status: :error, display_name: File.basename(symlink_path), error: e.message }
+        error_count += 1
       end
 
       {
@@ -149,6 +152,17 @@ module ClaudeAgents
         error_count: error_count,
         results: results
       }
+    end
+
+    def validate_managed_path!(path)
+      expanded = File.expand_path(path)
+      allowed_roots = Config.allowed_symlink_roots
+
+      if allowed_roots.any? { |root| expanded == root || expanded.start_with?("#{root}#{File::SEPARATOR}") }
+        return expanded
+      end
+
+      raise SymlinkError, "Destination outside managed directories: #{expanded}"
     end
 
     # Component-specific removal methods
@@ -217,16 +231,14 @@ module ClaudeAgents
       error_count = 0
 
       awesome_files.each do |file_path|
-        begin
-          result = remove_symlink(file_path)
-          results << result
+        result = remove_symlink(file_path)
+        results << result
 
-          removed_count += 1 if result[:status] == :removed
-        rescue SymlinkError => e
-          ui.error("Failed to remove #{File.basename(file_path)}: #{e.message}")
-          results << { status: :error, display_name: File.basename(file_path), error: e.message }
-          error_count += 1
-        end
+        removed_count += 1 if result[:status] == :removed
+      rescue SymlinkError => e
+        ui.error("Failed to remove #{File.basename(file_path)}: #{e.message}")
+        results << { status: :error, display_name: File.basename(file_path), error: e.message }
+        error_count += 1
       end
 
       {
@@ -258,13 +270,13 @@ module ClaudeAgents
       end
 
       # Remove commands directory if empty
-      if Dir.exist?(Config.commands_dir) && Dir.empty?(Config.commands_dir)
-        begin
-          Dir.rmdir(Config.commands_dir)
-          ui.removed('empty commands directory')
-        rescue SystemCallError => e
-          ui.warn("Could not remove empty commands directory: #{e.message}")
-        end
+      return unless Dir.exist?(Config.commands_dir) && Dir.empty?(Config.commands_dir)
+
+      begin
+        Dir.rmdir(Config.commands_dir)
+        ui.removed('empty commands directory')
+      rescue SystemCallError => e
+        ui.warn("Could not remove empty commands directory: #{e.message}")
       end
     end
   end

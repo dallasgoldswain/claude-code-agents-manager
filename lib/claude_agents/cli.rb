@@ -34,7 +34,7 @@ module ClaudeAgents
       • awesome-claude-code-subagents - Industry-standard agents (116 agents)
     DESC
     option :component, type: :string, aliases: '-c',
-           desc: 'Install specific component (dlabs, wshobson-agents, wshobson-commands, awesome)'
+                       desc: 'Install specific component (dlabs, wshobson-agents, wshobson-commands, awesome)'
     option :yes, type: :boolean, aliases: '-y', desc: 'Skip interactive prompts and install all'
 
     def install
@@ -75,7 +75,7 @@ module ClaudeAgents
       result = installer.install_component(component)
 
       @ui.newline
-      if result[:created_links] > 0
+      if result[:created_links].positive?
         @ui.success("Successfully installed #{result[:created_links]} #{component} agents")
       else
         @ui.warn("No new #{component} agents were installed")
@@ -116,7 +116,7 @@ module ClaudeAgents
         result = remover.remove_component(component)
 
         @ui.newline
-        if result[:removed_count] > 0
+        if result[:removed_count].positive?
           @ui.success("Successfully removed #{result[:removed_count]} #{component} agents")
         else
           @ui.info("No #{component} agents were found to remove")
@@ -185,12 +185,10 @@ module ClaudeAgents
       all_passed = true
 
       checks.each do |check|
-        begin
-          check.call
-        rescue StandardError => e
-          @ui.error("Check failed: #{e.message}")
-          all_passed = false
-        end
+        check.call
+      rescue StandardError => e
+        @ui.error("Check failed: #{e.message}")
+        all_passed = false
       end
 
       @ui.newline
@@ -208,16 +206,16 @@ module ClaudeAgents
 
     def configure_ui
       # Configure UI based on options
-      if options[:no_color]
-        @ui.pastel.enabled = false
-      end
+      return unless options[:no_color]
+
+      @ui.pastel.enabled = false
     end
 
     def validate_component!(component)
-      unless Config.valid_component?(component)
-        available = Config.all_components.join(', ')
-        raise ValidationError, "Invalid component: #{component}. Available: #{available}"
-      end
+      return if Config.valid_component?(component)
+
+      available = Config.all_components.join(', ')
+      raise ValidationError, "Invalid component: #{component}. Available: #{available}"
     end
 
     # System health checks
@@ -270,9 +268,7 @@ module ClaudeAgents
         next unless Dir.exist?(dir)
 
         Dir.glob(File.join(dir, '**/*')).each do |path|
-          if File.symlink?(path) && !File.exist?(path)
-            broken_symlinks << path
-          end
+          broken_symlinks << path if File.symlink?(path) && !File.exist?(path)
         end
       end
 
@@ -287,7 +283,7 @@ module ClaudeAgents
     def check_repositories
       @ui.subsection('Checking repositories')
 
-      Config::REPOSITORIES.each do |key, repo_info|
+      Config::REPOSITORIES.each_value do |repo_info|
         repo_path = File.join(Config.project_root, repo_info[:dir])
 
         if Dir.exist?(repo_path)

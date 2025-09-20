@@ -38,29 +38,40 @@ module ClaudeAgents
       ui.newline
       return unless ui.confirm('Proceed with installation?')
 
-      # Ensure repositories are available
-      ensure_repositories(selected_components)
-
       # Perform installations
       install_components(selected_components)
     end
 
     # Install specific components
-    def install_component(component)
-      ui.section("Installing #{Config.component_info(component)[:name]}")
+    def install_component(component, ensure_repo: true)
+      component = component.to_sym
+      info = Config.component_info(component)
+      raise ValidationError, "Unknown component: #{component}" unless info
 
-      case component.to_sym
-      when :dlabs
-        install_dlabs_agents
-      when :wshobson_agents
-        install_wshobson_agents
-      when :wshobson_commands
-        install_wshobson_commands
-      when :awesome
-        install_awesome_agents
-      else
-        raise ValidationError, "Unknown component: #{component}"
+      ui.section("Installing #{info[:name]}")
+
+      ensure_repositories([component]) if ensure_repo
+      ensure_component_preconditions(component)
+
+      file_mappings = file_processor.get_file_mappings_for_component(component)
+
+      if file_mappings.empty?
+        ui.warn("No files found to install for #{info[:name]}")
+        return { total_files: 0, created_links: 0, skipped_files: 0, success: true }
       end
+
+      result = symlink_manager.create_symlinks(file_mappings)
+      result[:success] = true
+      result
+    rescue ValidationError, RepositoryError, SymlinkError => e
+      ui.error(e.message)
+      {
+        success: false,
+        error: e.message,
+        total_files: 0,
+        created_links: 0,
+        skipped_files: 0
+      }
     end
 
     # Install multiple components with summary
@@ -69,15 +80,16 @@ module ClaudeAgents
       ui.section('Installing Components')
 
       Config.ensure_directories!
+      ensure_repositories(components)
       results = {}
 
       components.each do |component|
+        component_sym = component.to_sym
         begin
-          results[component] = install_component(component)
-          results[component][:success] = true
+          results[component_sym] = install_component(component_sym, ensure_repo: false)
         rescue StandardError => e
           ui.error("Failed to install #{component}: #{e.message}")
-          results[component] = {
+          results[component_sym] = {
             success: false,
             error: e.message,
             total_files: 0,
@@ -97,7 +109,7 @@ module ClaudeAgents
 
     # Repository management
     def ensure_repositories(components)
-      repos_needed = components.select { |comp| Config.repository_for(comp) }
+      repos_needed = components.map(&:to_sym).select { |comp| Config.repository_for(comp) }
       return if repos_needed.empty?
 
       ui.section('Repository Management')
@@ -119,19 +131,17 @@ module ClaudeAgents
     def clone_repository(repo_url, dir_name)
       target_path = File.join(Config.project_root, dir_name)
 
-      command = "gh repo clone #{repo_url} #{target_path}"
-
       spinner = ui.spinner("Cloning #{repo_url}...")
       spinner.auto_spin
 
-      success = system(command, out: File::NULL, err: File::NULL)
+      success = system('gh', 'repo', 'clone', repo_url, target_path, out: File::NULL, err: File::NULL)
       spinner.stop
 
-      if success
-        ui.success("Successfully cloned #{repo_url}")
-      else
+      unless success
         raise RepositoryError, "Failed to clone repository: #{repo_url}. Please check your GitHub CLI setup."
       end
+
+      ui.success("Successfully cloned #{repo_url}")
     end
 
     def update_repository(repo_path, repo_name)
@@ -148,82 +158,12 @@ module ClaudeAgents
       end
     end
 
-    # Component installation methods
-    def install_dlabs_agents
-      ui.subsection('Setting up dLabs agents')
-
-      file_mappings = file_processor.get_file_mappings_for_component(:dlabs)
-
-      if file_mappings.empty?
-        ui.warn('No dLabs agent files found to install')
-        return { total_files: 0, created_links: 0, skipped_files: 0 }
+    def ensure_component_preconditions(component)
+      case component
+      when :wshobson_commands
+        FileUtils.mkdir_p(Config.tools_dir)
+        FileUtils.mkdir_p(Config.workflows_dir)
       end
-
-      symlink_manager.create_symlinks(file_mappings)
-    end
-
-    def install_wshobson_agents
-      ui.subsection('Setting up wshobson agents')
-
-      # Ensure repository exists
-      source_dir = Config.source_dir_for(:wshobson_agents)
-      unless Dir.exist?(source_dir)
-        ui.error("wshobson-agents repository not found. Please run the interactive installer.")
-        return { total_files: 0, created_links: 0, skipped_files: 0 }
-      end
-
-      file_mappings = file_processor.get_file_mappings_for_component(:wshobson_agents)
-
-      if file_mappings.empty?
-        ui.warn('No wshobson agent files found to install')
-        return { total_files: 0, created_links: 0, skipped_files: 0 }
-      end
-
-      symlink_manager.create_symlinks(file_mappings)
-    end
-
-    def install_wshobson_commands
-      ui.subsection('Setting up wshobson commands')
-
-      # Ensure repository exists
-      source_dir = Config.source_dir_for(:wshobson_commands)
-      unless Dir.exist?(source_dir)
-        ui.error("wshobson-commands repository not found. Please run the interactive installer.")
-        return { total_files: 0, created_links: 0, skipped_files: 0 }
-      end
-
-      # Ensure command directories exist
-      FileUtils.mkdir_p(Config.tools_dir)
-      FileUtils.mkdir_p(Config.workflows_dir)
-
-      file_mappings = file_processor.get_file_mappings_for_component(:wshobson_commands)
-
-      if file_mappings.empty?
-        ui.warn('No wshobson command files found to install')
-        return { total_files: 0, created_links: 0, skipped_files: 0 }
-      end
-
-      symlink_manager.create_symlinks(file_mappings)
-    end
-
-    def install_awesome_agents
-      ui.subsection('Setting up awesome-claude-code-subagents')
-
-      # Ensure repository exists
-      source_dir = Config.source_dir_for(:awesome)
-      unless Dir.exist?(source_dir)
-        ui.error("awesome-claude-code-subagents repository not found. Please run the interactive installer.")
-        return { total_files: 0, created_links: 0, skipped_files: 0 }
-      end
-
-      file_mappings = file_processor.get_file_mappings_for_component(:awesome)
-
-      if file_mappings.empty?
-        ui.warn('No awesome agent files found to install')
-        return { total_files: 0, created_links: 0, skipped_files: 0 }
-      end
-
-      symlink_manager.create_symlinks(file_mappings)
     end
 
     # Cleanup and removal checking
