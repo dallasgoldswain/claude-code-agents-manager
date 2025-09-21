@@ -40,3 +40,6 @@ pids
 # Temporary files
 tmp/
 temp/
+
+# Claude Code backups
+.claude.yaml.backup
