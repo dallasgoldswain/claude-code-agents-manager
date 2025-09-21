@@ -26,6 +26,7 @@ require 'fakefs/safe'
 require 'pathname'
 require 'tempfile'
 require 'stringio'
+require 'open3'
 
 # Use a more detailed reporter for better test output
 Minitest::Reporters.use! [

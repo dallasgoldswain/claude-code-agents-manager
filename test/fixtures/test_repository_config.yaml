@@ -1,0 +1,48 @@
+repositories:
+  test-repo-1:
+    url: "https://github.com/test-org/test-repo-1.git"
+    local_path: "agents/test-repo-1"
+    branch: "main"
+    description: "First test repository for integration testing"
+
+  test-repo-2:
+    url: "https://github.com/test-org/test-repo-2.git"
+    local_path: "agents/test-repo-2"
+    branch: "develop"
+    description: "Second test repository with different branch"
+
+  test-commands-repo:
+    url: "https://github.com/test-org/commands.git"
+    local_path: "commands/test-commands"
+    branch: "main"
+    description: "Test commands repository"
+
+components:
+  test-component-1:
+    name: "test-component-1"
+    source_dir: "agents/test-repo-1"
+    dest_dir: "~/.claude/agents"
+    prefix: "test1-"
+    skip_patterns:
+      - "*.tmp"
+      - ".git*"
+      - "README.md"
+
+  test-component-2:
+    name: "test-component-2"
+    source_dir: "agents/test-repo-2"
+    dest_dir: "~/.claude/agents"
+    prefix: "test2-"
+    repository: "test-repo-2"
+    skip_patterns:
+      - "*.log"
+      - "node_modules/*"
+
+  test-commands:
+    name: "test-commands"
+    source_dir: "commands/test-commands/tools"
+    dest_dir: "~/.claude/commands/tools"
+    prefix: "test-"
+    repository: "test-commands-repo"
+    skip_patterns:
+      - "*.bak"

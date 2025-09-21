@@ -2,41 +2,59 @@
 
 require 'rake/testtask'
 
-# Default task runs all tests
-task default: :test
+# Load RuboCop if available
+begin
+  require 'rubocop/rake_task'
+  RUBOCOP_AVAILABLE = true
+rescue LoadError
+  RUBOCOP_AVAILABLE = false
+end
+
+# Default task runs tests and linting
+if RUBOCOP_AVAILABLE
+  task default: [:test, :rubocop]
+else
+  task default: :test
+end
 
 # Main test task - runs all tests
 Rake::TestTask.new(:test) do |t|
   t.libs << 'test'
   t.libs << 'lib'
-  t.test_files = FileList['test/**/*_test.rb']
+  t.test_files = FileList['test/**/*_test.rb', 'test/**/test_*.rb']
   t.warning = false
   t.verbose = true
 end
 
-# Run only unit tests
-Rake::TestTask.new(:unit) do |t|
-  t.libs << 'test'
-  t.libs << 'lib'
-  t.test_files = FileList['test/unit/**/*_test.rb']
-  t.warning = false
-  t.verbose = true
+# Separate tasks for different test types
+namespace :test do
+  Rake::TestTask.new(:unit) do |t|
+    t.libs << 'test'
+    t.libs << 'lib'
+    t.test_files = FileList['test/unit/**/*_test.rb', 'test/unit/**/test_*.rb']
+    t.warning = false
+    t.verbose = true
+  end
+
+  Rake::TestTask.new(:integration) do |t|
+    t.libs << 'test'
+    t.libs << 'lib'
+    t.test_files = FileList['test/integration/**/*_test.rb', 'test/integration/**/test_*.rb']
+    t.warning = false
+    t.verbose = true
+  end
+
+  # Run tests with coverage report
+  desc 'Run tests with coverage report'
+  task :coverage do
+    ENV['COVERAGE'] = 'true'
+    Rake::Task['test'].invoke
+  end
 end
 
-# Run only integration tests
-Rake::TestTask.new(:integration) do |t|
-  t.libs << 'test'
-  t.libs << 'lib'
-  t.test_files = FileList['test/integration/**/*_test.rb']
-  t.warning = false
-  t.verbose = true
-end
-
-# Run tests with coverage report
-desc 'Run tests with coverage report'
-task :coverage do
-  ENV['COVERAGE'] = 'true'
-  Rake::Task['test'].invoke
+# RuboCop linting (if available)
+if RUBOCOP_AVAILABLE
+  RuboCop::RakeTask.new
 end
 
 # Run specific test file

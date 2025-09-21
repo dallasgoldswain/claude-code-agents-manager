@@ -1,0 +1,43 @@
+name: sample-test-tool
+description: A sample tool configuration for testing
+type: workflow
+category: testing
+
+metadata:
+  version: "1.0.0"
+  author: "Test Suite"
+  tags: ["testing", "sample", "fixture"]
+
+configuration:
+  timeout: 30
+  retry_count: 3
+  parallel: false
+
+steps:
+  - name: "Prepare environment"
+    action: "setup"
+    parameters:
+      workspace: "/tmp/test"
+
+  - name: "Execute main task"
+    action: "run"
+    parameters:
+      command: "echo 'Sample tool execution'"
+
+  - name: "Cleanup"
+    action: "teardown"
+    parameters:
+      preserve_logs: true
+
+validation:
+  required_files: []
+  required_env_vars: []
+
+output:
+  format: "json"
+  destination: "stdout"
+
+notes: |
+  This is a sample tool configuration used for testing
+  the claude-agents system's ability to handle YAML
+  configuration files for workflows and tools.
