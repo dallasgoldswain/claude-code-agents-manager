@@ -13,7 +13,7 @@ class SymlinkManagerTest < ClaudeAgentsTest
 
   def teardown
     super
-    Mocha::Mock.reset_all
+    Mocha::Mockery.instance.teardown
   end
 
   # Test initialization
@@ -26,7 +26,7 @@ class SymlinkManagerTest < ClaudeAgentsTest
 
     def test_initializes_file_processor
       # FileProcessor should be initialized during symlink manager creation
-      assert ClaudeAgents::FileProcessor.respond_to?(:new)
+      assert_respond_to ClaudeAgents::FileProcessor, :new
     end
   end
 
@@ -34,8 +34,9 @@ class SymlinkManagerTest < ClaudeAgentsTest
   class SymlinkCreationTest < SymlinkManagerTest
     def test_creates_symlinks_for_dlabs_component
       with_mock_home do |home|
-        # Set up source files
-        source_dir = File.join(Dir.pwd, 'agents', 'dallasLabs')
+        # Set up source files in test directory
+        test_agents_dir = File.join(File.dirname(__FILE__), '..', 'agents')
+        source_dir = File.join(test_agents_dir, 'dallasLabs')
         FileUtils.mkdir_p(source_dir)
         agent_files = {
           'test-agent.md' => '# Test Agent',
@@ -46,9 +47,24 @@ class SymlinkManagerTest < ClaudeAgentsTest
           File.write(File.join(source_dir, filename), content)
         end
 
-        # Set up expectations
-        @file_processor.stubs(:should_skip?).returns(false)
-        @file_processor.stubs(:process_filename).returns(->(name) { "dLabs-#{name}" })
+        # Mock Config to return test directories
+        ClaudeAgents::Config::Components.stubs(:source_dir_for).with(:dlabs).returns(source_dir)
+        ClaudeAgents::Config::Components.stubs(:destination_dir_for).with(:dlabs).returns(File.join(home, '.claude', 'agents'))
+        ClaudeAgents::Config::Components.stubs(:valid_component?).with(:dlabs).returns(true)
+
+        # Set up file processor expectations
+        file_mappings = agent_files.keys.map do |filename|
+          {
+            source: File.join(source_dir, filename),
+            destination: File.join(home, '.claude', 'agents', "dLabs-#{filename}"),
+            display_name: "dLabs-#{filename}"
+          }
+        end
+        @file_processor.stubs(:get_file_mappings_for_component).with(:dlabs).returns(file_mappings)
+
+        # Set up UI expectations
+        @ui.stubs(:linked) # Allow linked method to be called
+        @ui.expects(:success).at_least_once
 
         dest_dir = File.join(home, '.claude', 'agents')
 
@@ -56,20 +72,19 @@ class SymlinkManagerTest < ClaudeAgentsTest
 
         # Verify symlinks were created
         agent_files.each_key do |filename|
-          expected_link = File.join(dest_dir, "dLabs-#{filename}")
-          expected_target = File.join(source_dir, filename)
+          File.join(dest_dir, "dLabs-#{filename}")
+          File.join(source_dir, filename)
 
           # NOTE: In test environment, actual symlinks might not be created due to mocking
           # We verify through expectations instead
         end
-
-        @ui.expects(:success).at_least_once
       end
     end
 
     def test_skips_existing_symlinks
       with_mock_home do |home|
-        source_dir = File.join(Dir.pwd, 'agents', 'dallasLabs')
+        test_agents_dir = File.join(File.dirname(__FILE__), '..', 'agents')
+        source_dir = File.join(test_agents_dir, 'dallasLabs')
         dest_dir = File.join(home, '.claude', 'agents')
         FileUtils.mkdir_p(source_dir)
         FileUtils.mkdir_p(dest_dir)
@@ -91,7 +106,8 @@ class SymlinkManagerTest < ClaudeAgentsTest
 
     def test_handles_symlink_creation_errors
       with_mock_home do |home|
-        source_dir = File.join(Dir.pwd, 'agents', 'dallasLabs')
+        test_agents_dir = File.join(File.dirname(__FILE__), '..', 'agents')
+        source_dir = File.join(test_agents_dir, 'dallasLabs')
         dest_dir = File.join(home, '.claude', 'agents')
         FileUtils.mkdir_p(source_dir)
 
@@ -116,7 +132,8 @@ class SymlinkManagerTest < ClaudeAgentsTest
 
     def test_creates_symlinks_with_dry_run_mode
       with_mock_home do |home|
-        source_dir = File.join(Dir.pwd, 'agents', 'dallasLabs')
+        test_agents_dir = File.join(File.dirname(__FILE__), '..', 'agents')
+        source_dir = File.join(test_agents_dir, 'dallasLabs')
         dest_dir = File.join(home, '.claude', 'agents')
         FileUtils.mkdir_p(source_dir)
 
@@ -130,7 +147,7 @@ class SymlinkManagerTest < ClaudeAgentsTest
         @symlink_manager.create_symlinks('dlabs', dry_run: true)
 
         # Verify no actual symlinks were created
-        refute File.exist?(File.join(dest_dir, 'dLabs-test.md'))
+        refute_path_exists File.join(dest_dir, 'dLabs-test.md')
       end
     end
   end
@@ -158,15 +175,15 @@ class SymlinkManagerTest < ClaudeAgentsTest
           # Track for cleanup
           track_symlink(link_path)
         end
+        # Expect success message before invoking removal
+        @ui.expects(:success).with(includes('Removed')).at_least_once
 
         @symlink_manager.remove_symlinks('dlabs')
 
         # Verify all symlinks were removed
         symlinks.each do |link_name|
-          refute File.exist?(File.join(dest_dir, link_name))
+          refute_path_exists File.join(dest_dir, link_name)
         end
-
-        @ui.expects(:success).with(includes('Removed')).at_least_once
       end
     end
 
@@ -184,7 +201,7 @@ class SymlinkManagerTest < ClaudeAgentsTest
 
         @symlink_manager.remove_symlinks('dlabs')
 
-        refute File.exist?(broken_link)
+        refute_path_exists broken_link
       end
     end
 
@@ -202,7 +219,7 @@ class SymlinkManagerTest < ClaudeAgentsTest
 
         @symlink_manager.remove_symlinks('dlabs', confirm: true)
 
-        refute File.exist?(link_path)
+        refute_path_exists link_path
       end
     end
 
@@ -221,7 +238,7 @@ class SymlinkManagerTest < ClaudeAgentsTest
 
         @symlink_manager.remove_symlinks('dlabs', confirm: true)
 
-        assert File.exist?(link_path)
+        assert_path_exists link_path
       end
     end
   end
@@ -242,7 +259,8 @@ class SymlinkManagerTest < ClaudeAgentsTest
         FileUtils.mkdir_p(dest_dir)
         FileUtils.chmod(0o444, dest_dir) # Read-only
 
-        source_dir = File.join(Dir.pwd, 'agents', 'dallasLabs')
+        test_agents_dir = File.join(File.dirname(__FILE__), '..', 'agents')
+        source_dir = File.join(test_agents_dir, 'dallasLabs')
         FileUtils.mkdir_p(source_dir)
 
         @ui.expects(:error).with(includes('not writable'))
@@ -269,8 +287,9 @@ class SymlinkManagerTest < ClaudeAgentsTest
   # Test batch operations
   class BatchOperationsTest < SymlinkManagerTest
     def test_creates_symlinks_for_multiple_files_efficiently
-      with_mock_home do |home|
-        source_dir = File.join(Dir.pwd, 'agents', 'dallasLabs')
+      with_mock_home do |_home|
+        test_agents_dir = File.join(File.dirname(__FILE__), '..', 'agents')
+        source_dir = File.join(test_agents_dir, 'dallasLabs')
         FileUtils.mkdir_p(source_dir)
 
         # Create many files
@@ -289,8 +308,9 @@ class SymlinkManagerTest < ClaudeAgentsTest
     end
 
     def test_reports_statistics_after_batch_operation
-      with_mock_home do |home|
-        source_dir = File.join(Dir.pwd, 'agents', 'dallasLabs')
+      with_mock_home do |_home|
+        test_agents_dir = File.join(File.dirname(__FILE__), '..', 'agents')
+        source_dir = File.join(test_agents_dir, 'dallasLabs')
         FileUtils.mkdir_p(source_dir)
 
         5.times do |i|
@@ -320,19 +340,20 @@ class SymlinkManagerTest < ClaudeAgentsTest
         File.symlink(valid_target, File.join(dest_dir, 'valid.md'))
 
         File.symlink('/nonexistent', File.join(dest_dir, 'broken.md'))
+        # Expect cleanup summary info before running cleanup
+        @ui.expects(:info).with(includes('Cleaned up'))
 
         @symlink_manager.cleanup_broken_symlinks
 
-        assert File.exist?(File.join(dest_dir, 'valid.md'))
-        refute File.exist?(File.join(dest_dir, 'broken.md'))
-
-        @ui.expects(:info).with(includes('Cleaned up'))
+        assert_path_exists File.join(dest_dir, 'valid.md')
+        refute_path_exists File.join(dest_dir, 'broken.md')
       end
     end
 
     def test_verifies_symlinks_point_to_correct_targets
       with_mock_home do |home|
-        source_dir = File.join(Dir.pwd, 'agents', 'dallasLabs')
+        test_agents_dir = File.join(File.dirname(__FILE__), '..', 'agents')
+        source_dir = File.join(test_agents_dir, 'dallasLabs')
         dest_dir = File.join(home, '.claude', 'agents')
         FileUtils.mkdir_p(source_dir)
         FileUtils.mkdir_p(dest_dir)
@@ -345,7 +366,7 @@ class SymlinkManagerTest < ClaudeAgentsTest
 
         result = @symlink_manager.verify_symlinks('dlabs')
 
-        assert result[:valid].include?(link_path)
+        assert_includes result[:valid], link_path
         assert_empty result[:broken]
         assert_empty result[:mismatched]
       end
@@ -356,7 +377,8 @@ class SymlinkManagerTest < ClaudeAgentsTest
   class CommandSymlinkTest < SymlinkManagerTest
     def test_creates_command_symlinks_in_correct_directories
       with_mock_home do |home|
-        source_dir = File.join(Dir.pwd, 'agents', 'wshobson-commands')
+        test_agents_dir = File.join(File.dirname(__FILE__), '..', 'agents')
+        source_dir = File.join(test_agents_dir, 'wshobson-commands')
         FileUtils.mkdir_p(File.join(source_dir, 'tools'))
         FileUtils.mkdir_p(File.join(source_dir, 'workflows'))
 
@@ -373,14 +395,15 @@ class SymlinkManagerTest < ClaudeAgentsTest
         workflows_dir = File.join(home, '.claude', 'commands', 'workflows')
 
         # Verify symlinks are in correct subdirectories
-        assert File.exist?(File.join(tools_dir, 'test-tool.md'))
-        assert File.exist?(File.join(workflows_dir, 'test-workflow.md'))
+        assert_path_exists File.join(tools_dir, 'test-tool.md')
+        assert_path_exists File.join(workflows_dir, 'test-workflow.md')
       end
     end
 
     def test_preserves_command_directory_structure
       with_mock_home do |home|
-        source_dir = File.join(Dir.pwd, 'agents', 'wshobson-commands')
+        test_agents_dir = File.join(File.dirname(__FILE__), '..', 'agents')
+        source_dir = File.join(test_agents_dir, 'wshobson-commands')
         nested_dir = File.join(source_dir, 'tools', 'nested', 'deep')
         FileUtils.mkdir_p(nested_dir)
 
@@ -394,7 +417,7 @@ class SymlinkManagerTest < ClaudeAgentsTest
         dest_nested = File.join(home, '.claude', 'commands', 'tools', 'nested', 'deep')
 
         assert Dir.exist?(dest_nested)
-        assert File.exist?(File.join(dest_nested, 'deep-tool.md'))
+        assert_path_exists File.join(dest_nested, 'deep-tool.md')
       end
     end
   end

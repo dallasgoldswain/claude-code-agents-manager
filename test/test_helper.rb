@@ -78,7 +78,7 @@ class ClaudeAgentsTest < Minitest::Test
 
   # Mock home directory for testing
   def with_mock_home
-    original_home = ENV['HOME']
+    original_home = Dir.home
     temp_home = Dir.mktmpdir('mock_home')
     @mock_homes << temp_home
     ENV['HOME'] = temp_home
@@ -129,6 +129,8 @@ class ClaudeAgentsTest < Minitest::Test
     ui.stubs(:warning).returns(nil)
     ui.stubs(:info).returns(nil)
     ui.stubs(:verbose).returns(nil)
+    ui.stubs(:removed).returns(nil)
+    ui.stubs(:linked).returns(nil)
     ui.stubs(:with_spinner).yields.returns(true)
     ui.stubs(:with_progress).yields(mock_progress_bar).returns(true)
     ui.stubs(:confirm).returns(true)
@@ -150,7 +152,7 @@ class ClaudeAgentsTest < Minitest::Test
 
   # Assert that a file exists with optional content check
   def assert_file_exists(path, content = nil)
-    assert File.exist?(path), "Expected file #{path} to exist"
+    assert_path_exists path, "Expected file #{path} to exist"
     return unless content
 
     actual_content = File.read(path)
@@ -167,6 +169,7 @@ class ClaudeAgentsTest < Minitest::Test
     return unless target_path
 
     actual_target = File.readlink(link_path)
+
     assert_equal target_path, actual_target, "Symlink target doesn't match"
   end
 
@@ -210,6 +213,7 @@ class ClaudeAgentsTest < Minitest::Test
     cleanup_temp_files
     cleanup_mock_homes
     cleanup_temp_dirs
+    cleanup_test_agents_directory
   end
 
   # Remove all tracked symlinks
@@ -227,7 +231,7 @@ class ClaudeAgentsTest < Minitest::Test
   # Remove all tracked temporary files
   def cleanup_temp_files
     @temp_files.each do |file|
-      File.delete(file) if File.exist?(file)
+      FileUtils.rm_f(file)
     rescue StandardError => e
       warn "Failed to remove temp file #{file}: #{e.message}"
     end
@@ -237,7 +241,7 @@ class ClaudeAgentsTest < Minitest::Test
   # Clean up mock home directories
   def cleanup_mock_homes
     @mock_homes.each do |dir|
-      FileUtils.rm_rf(dir) if Dir.exist?(dir)
+      FileUtils.rm_rf(dir)
     rescue StandardError => e
       warn "Failed to remove mock home #{dir}: #{e.message}"
     end
@@ -247,11 +251,23 @@ class ClaudeAgentsTest < Minitest::Test
   # Clean up tracked temporary directories
   def cleanup_temp_dirs
     @temp_dirs.each do |dir|
-      FileUtils.rm_rf(dir) if Dir.exist?(dir)
+      FileUtils.rm_rf(dir)
     rescue StandardError => e
       warn "Failed to remove temp dir #{dir}: #{e.message}"
     end
     @temp_dirs.clear
+  end
+
+  # Clean up test agents directory artifacts
+  def cleanup_test_agents_directory
+    test_agents_dir = File.join(__dir__, 'agents')
+    return unless Dir.exist?(test_agents_dir)
+
+    begin
+      FileUtils.rm_rf(test_agents_dir)
+    rescue StandardError => e
+      warn "Failed to remove test agents directory #{test_agents_dir}: #{e.message}"
+    end
   end
 end
 
@@ -295,6 +311,7 @@ module CLITestHelper
   # Assert that a command exits with specific code
   def assert_command_exit_code(command, args, expected_code)
     run_command(command, *args)
+
     assert_equal expected_code, @exit_code
   end
 end
@@ -360,5 +377,15 @@ at_exit do
     FileUtils.rm_rf(dir)
   rescue StandardError => e
     warn "Failed to clean up mock home #{dir}: #{e.message}"
+  end
+
+  # Clean up test agents directory
+  test_agents_dir = File.join(__dir__, 'agents')
+  if Dir.exist?(test_agents_dir)
+    begin
+      FileUtils.rm_rf(test_agents_dir)
+    rescue StandardError => e
+      warn "Failed to clean up test agents directory: #{e.message}"
+    end
   end
 end

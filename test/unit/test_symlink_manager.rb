@@ -47,6 +47,7 @@ class TestSymlinkManager < ClaudeAgentsTest
 
       # Verify symlink was created
       expected_link = File.join(dest_dir, "#{@config[:prefix]}test-agent.md")
+
       assert File.symlink?(expected_link), 'Should create symlink'
       assert_equal test_file, File.readlink(expected_link), 'Symlink should point to source file'
     end
@@ -89,10 +90,10 @@ class TestSymlinkManager < ClaudeAgentsTest
       # Check that only valid file was symlinked
       assert File.symlink?(File.join(dest_dir, "#{@config[:prefix]}agent.md")),
              'Should create symlink for valid file'
-      refute File.exist?(File.join(dest_dir, "#{@config[:prefix]}temp.tmp")),
-             'Should skip .tmp files'
-      refute File.exist?(File.join(dest_dir, "#{@config[:prefix]}.hidden")),
-             'Should skip hidden files'
+      refute_path_exists File.join(dest_dir, "#{@config[:prefix]}temp.tmp"),
+                         'Should skip .tmp files'
+      refute_path_exists File.join(dest_dir, "#{@config[:prefix]}.hidden"),
+                         'Should skip hidden files'
     end
   end
 
@@ -146,7 +147,7 @@ class TestSymlinkManager < ClaudeAgentsTest
       File.write(regular_file, 'Regular file')
 
       assert File.symlink?(dest_link), 'Symlink should exist'
-      assert File.exist?(regular_file), 'Regular file should exist'
+      assert_path_exists regular_file, 'Regular file should exist'
 
       config = @config.merge(source_dir: source_dir, dest_dir: dest_dir)
       manager = ClaudeAgents::SymlinkManager.new(config, @ui)
@@ -154,8 +155,8 @@ class TestSymlinkManager < ClaudeAgentsTest
       result = manager.remove_symlinks
 
       assert result, 'Should complete successfully'
-      refute File.exist?(dest_link), 'Symlink should be removed'
-      assert File.exist?(regular_file), 'Regular file should remain'
+      refute_path_exists dest_link, 'Symlink should be removed'
+      assert_path_exists regular_file, 'Regular file should remain'
     end
   end
 
@@ -189,7 +190,7 @@ class TestSymlinkManager < ClaudeAgentsTest
   def test_create_symlinks_error_handling
     with_temp_dir do |temp_dir|
       source_dir = File.join(temp_dir, 'source')
-      dest_dir = '/root/forbidden'  # Directory we can't write to
+      dest_dir = '/root/forbidden' # Directory we can't write to
       FileUtils.mkdir_p(source_dir)
 
       File.write(File.join(source_dir, 'agent.md'), 'Content')
@@ -271,7 +272,7 @@ class TestSymlinkManager < ClaudeAgentsTest
 
       # Verify symlink properties
       assert File.symlink?(dest_link), 'Should be a symlink'
-      assert File.exist?(dest_link), 'Symlink target should exist'
+      assert_path_exists dest_link, 'Symlink target should exist'
       assert_equal File.expand_path(source_file), File.expand_path(File.readlink(dest_link)),
                    'Symlink should point to correct target'
     end

@@ -71,7 +71,7 @@ RuboCop::RakeTask.new if RUBOCOP_AVAILABLE
 # Run specific test file
 desc 'Run a specific test file (use TEST=path/to/test.rb)'
 task :test_file do
-  test_file = ENV['TEST']
+  test_file = ENV.fetch('TEST', nil)
   unless test_file
     puts 'Please specify a test file with TEST=path/to/test.rb'
     exit 1
@@ -83,7 +83,7 @@ end
 # Run tests matching a pattern
 desc 'Run tests matching a pattern (use PATTERN=pattern)'
 task :test_pattern do
-  pattern = ENV['PATTERN']
+  pattern = ENV.fetch('PATTERN', nil)
   unless pattern
     puts 'Please specify a pattern with PATTERN=pattern'
     exit 1

@@ -29,6 +29,31 @@ module ClaudeAgents
         present_batch_summary(results)
       end
 
+      # Simple install method expected by tests
+      def install(component)
+        install_component(component)
+      end
+
+      # Install all available components
+      def install_all
+        components = Config.all_components
+        install_components(components)
+      end
+
+      # Directory creation method expected by tests
+      def ensure_directories_exist
+        Config.ensure_directories!
+      end
+
+      # Rollback installation by removing created symlinks
+      def rollback_installation
+        ui.info('Rolling back installation...')
+        Config.all_components.each do |component|
+          symlink_manager.remove_symlinks(component, confirmation: false)
+        end
+        ui.info('Rollback completed')
+      end
+
       private
 
       def component_info_for(component)

@@ -135,7 +135,7 @@ class ErrorHandlingTest < ClaudeAgentsTest
 
     def test_shows_backtrace_in_verbose_mode
       error = StandardError.new('Error with trace')
-      error.set_backtrace(['line1', 'line2', 'line3'])
+      error.set_backtrace(%w[line1 line2 line3])
 
       @ui.instance_variable_set(:@verbose, true)
       @ui.expects(:error).once
@@ -182,6 +182,7 @@ class ErrorHandlingTest < ClaudeAgentsTest
       operation = lambda do
         attempts += 1
         raise SocketError, 'Connection timeout' if attempts < max_retries
+
         'success'
       end
 
@@ -214,6 +215,7 @@ class ErrorHandlingTest < ClaudeAgentsTest
       operation = lambda do
         attempts += 1
         raise SocketError, 'Retry me' if attempts < 3
+
         'done'
       end
 
@@ -225,7 +227,7 @@ class ErrorHandlingTest < ClaudeAgentsTest
 
       elapsed = Time.now - start_time
       # With exponential backoff: 1s, 2s, 4s = at least 3s total
-      assert elapsed >= 3, 'Expected exponential backoff delays'
+      assert_operator elapsed, :>=, 3, 'Expected exponential backoff delays'
     end
 
     def test_graceful_degradation
@@ -251,8 +253,9 @@ class ErrorHandlingTest < ClaudeAgentsTest
         error = StandardError.new('Test error for logging')
         ClaudeAgents::ErrorHandler.log_error(error)
 
-        assert File.exist?(log_file)
+        assert_path_exists log_file
         log_content = File.read(log_file)
+
         assert_includes log_content, 'Test error for logging'
         assert_includes log_content, Time.now.strftime('%Y-%m-%d')
       end
@@ -274,7 +277,7 @@ class ErrorHandlingTest < ClaudeAgentsTest
         end
 
         # Check for rotated log files
-        assert File.exist?(log_file)
+        assert_path_exists log_file
         assert File.exist?("#{log_file}.1") || File.exist?("#{log_file}.2")
       end
     end
@@ -296,11 +299,9 @@ class ErrorHandlingTest < ClaudeAgentsTest
       errors = []
 
       3.times do |i|
-        begin
-          raise StandardError, "Error #{i}"
-        rescue StandardError => e
-          errors << e
-        end
+        raise StandardError, "Error #{i}"
+      rescue StandardError => e
+        errors << e
       end
 
       aggregated = ClaudeAgents::ErrorHandler.aggregate_errors(errors)
@@ -332,31 +333,31 @@ class ErrorHandlingTest < ClaudeAgentsTest
 
       assert_includes summary, '10 errors occurred'
       assert_includes summary, 'StandardError'
-      assert summary.length < 500, 'Summary should be concise'
+      assert_operator summary.length, :<, 500, 'Summary should be concise'
     end
   end
 
   # Test validation errors
   class ValidationErrorTest < ErrorHandlingTest
     def test_validates_required_fields
-      config = { name: 'test' }  # Missing required fields
+      config = { name: 'test' } # Missing required fields
 
       errors = ClaudeAgents::ErrorHandler.validate_config(config)
 
-      assert errors.any? { |e| e.message.include?('source_dir is required') }
-      assert errors.any? { |e| e.message.include?('dest_dir is required') }
+      assert(errors.any? { |e| e.message.include?('source_dir is required') })
+      assert(errors.any? { |e| e.message.include?('dest_dir is required') })
     end
 
     def test_validates_data_types
       config = {
-        name: 123,  # Should be string
+        name: 123, # Should be string
         source_dir: 'valid',
         dest_dir: 'valid'
       }
 
       errors = ClaudeAgents::ErrorHandler.validate_config(config)
 
-      assert errors.any? { |e| e.message.include?('name must be a string') }
+      assert(errors.any? { |e| e.message.include?('name must be a string') })
     end
 
     def test_validates_path_existence
@@ -368,15 +369,15 @@ class ErrorHandlingTest < ClaudeAgentsTest
 
       errors = ClaudeAgents::ErrorHandler.validate_config(config)
 
-      assert errors.any? { |e| e.message.include?('source_dir does not exist') }
+      assert(errors.any? { |e| e.message.include?('source_dir does not exist') })
     end
 
     def test_collects_all_validation_errors
-      config = {}  # Completely invalid
+      config = {} # Completely invalid
 
       errors = ClaudeAgents::ErrorHandler.validate_config(config)
 
-      assert errors.count >= 3  # At least name, source_dir, dest_dir errors
+      assert_operator errors.count, :>=, 3 # At least name, source_dir, dest_dir errors
       errors.each do |error|
         assert_instance_of ClaudeAgents::ValidationError, error
       end

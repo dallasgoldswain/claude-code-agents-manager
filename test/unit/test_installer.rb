@@ -25,7 +25,7 @@ class TestInstaller < ClaudeAgentsTest
     result = @installer.install_all
 
     assert_instance_of Hash, result
-    assert result.size >= 0, 'Should return results for components'
+    assert_operator result.size, :>=, 0, 'Should return results for components'
   end
 
   # Test install_component with valid component
@@ -104,6 +104,7 @@ class TestInstaller < ClaudeAgentsTest
 
     with_temp_dir do
       result = @installer.send(:clone_repository_if_needed, repo_name)
+
       assert result, 'Should successfully clone repository'
     end
   end
@@ -148,7 +149,7 @@ class TestInstaller < ClaudeAgentsTest
   # Test installation with progress tracking
   def test_install_all_with_progress_tracking
     # Mock component list
-    components = ['dlabs', 'wshobson-agents']
+    components = %w[dlabs wshobson-agents]
     ClaudeAgents::Config.stubs(:all_components).returns(components)
 
     # Mock individual installations
@@ -182,7 +183,7 @@ class TestInstaller < ClaudeAgentsTest
 
   # Test batch installation with mixed results
   def test_install_all_with_mixed_results
-    components = ['dlabs', 'wshobson-agents', 'awesome']
+    components = %w[dlabs wshobson-agents awesome]
     ClaudeAgents::Config.stubs(:all_components).returns(components)
 
     # Mock mixed installation results
@@ -196,9 +197,9 @@ class TestInstaller < ClaudeAgentsTest
     result = @installer.install_all
 
     assert_instance_of Hash, result
-    assert_equal true, result['dlabs'] if result.key?('dlabs')
-    assert result['wshobson-agents'].is_a?(StandardError) if result.key?('wshobson-agents')
-    assert_equal true, result['awesome'] if result.key?('awesome')
+    assert result['dlabs'] if result.key?('dlabs')
+    assert_kind_of StandardError, result['wshobson-agents'] if result.key?('wshobson-agents')
+    assert result['awesome'] if result.key?('awesome')
   end
 
   # Test installer UI integration
@@ -225,7 +226,7 @@ class TestInstaller < ClaudeAgentsTest
 
   # Helper to mock all component installations
   def mock_all_component_installations
-    components = ['dlabs', 'wshobson-agents', 'wshobson-commands', 'awesome']
+    components = %w[dlabs wshobson-agents wshobson-commands awesome]
     ClaudeAgents::Config.stubs(:all_components).returns(components)
 
     components.each do |component|

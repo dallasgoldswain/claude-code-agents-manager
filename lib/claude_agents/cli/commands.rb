@@ -50,7 +50,7 @@ module ClaudeAgents
             • Use --force to skip confirmation prompts
           DESC
           option :component, type: :string, aliases: '-c',
-                 desc: 'Install specific component (dlabs, wshobson-agents, wshobson-commands, awesome)'
+                             desc: 'Install specific component (dlabs, wshobson-agents, wshobson-commands, awesome)'
           option :yes, type: :boolean, aliases: '-y', desc: 'Skip interactive prompts and install all'
           option :force, type: :boolean, aliases: '-f', desc: 'Skip confirmation prompts'
         end

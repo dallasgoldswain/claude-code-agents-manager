@@ -16,25 +16,25 @@ class TestConfig < ClaudeAgentsTest
   def test_project_root_points_to_repository
     project_root = ClaudeAgents::Config.project_root
 
-    assert File.exist?(File.join(project_root, 'Gemfile'))
+    assert_path_exists File.join(project_root, 'Gemfile')
     assert project_root.end_with?('claude-agents')
   end
 
   def test_agents_dir_resides_in_home_directory
     with_mock_home do |home|
       expected = File.join(home, '.claude', 'agents')
+
       assert_equal expected, ClaudeAgents::Config.agents_dir
     end
   end
 
   def test_base_dir_prefers_environment_override
     with_temp_dir do |dir|
-      begin
-        ENV['CLAUDE_AGENTS_BASE_DIR'] = dir
-        assert_equal dir, ClaudeAgents::Config.base_dir
-      ensure
-        ENV.delete('CLAUDE_AGENTS_BASE_DIR')
-      end
+      ENV['CLAUDE_AGENTS_BASE_DIR'] = dir
+
+      assert_equal dir, ClaudeAgents::Config.base_dir
+    ensure
+      ENV.delete('CLAUDE_AGENTS_BASE_DIR')
     end
   end
 
@@ -90,7 +90,8 @@ class TestConfig < ClaudeAgentsTest
   def test_load_from_file_handles_missing_file
     with_temp_dir do |dir|
       path = File.join(dir, 'missing.yml')
-      assert_equal({}, ClaudeAgents::Config.load_from_file(path))
+
+      assert_empty(ClaudeAgents::Config.load_from_file(path))
     end
   end
 

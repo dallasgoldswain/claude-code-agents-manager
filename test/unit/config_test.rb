@@ -25,6 +25,7 @@ class ConfigTest < ClaudeAgentsTest
     def test_claude_dir_defaults_to_home
       with_mock_home do |home|
         expected = File.expand_path(File.join(home, '.claude'))
+
         assert_equal expected, ClaudeAgents::Config.claude_dir
       end
     end
@@ -40,6 +41,7 @@ class ConfigTest < ClaudeAgentsTest
 
     def test_agents_source_dir_points_into_project
       source_dir = ClaudeAgents::Config.agents_source_dir
+
       assert source_dir.end_with?('claude-agents/agents')
       assert Dir.exist?(source_dir), 'Agents source directory should exist inside the project'
     end
@@ -83,6 +85,7 @@ class ConfigTest < ClaudeAgentsTest
 
     def test_all_components_lists_registered_keys
       components = ClaudeAgents::Config.all_components
+
       assert_equal %i[dlabs awesome wshobson_agents wshobson_commands].sort, components.sort
     end
 
@@ -105,6 +108,7 @@ class ConfigTest < ClaudeAgentsTest
     def test_destination_dir_for_commands_component
       with_mock_home do |home|
         commands_dir = ClaudeAgents::Config.destination_dir_for(:wshobson_commands)
+
         assert_equal File.join(home, '.claude', 'commands'), commands_dir
       end
     end
@@ -153,12 +157,11 @@ class ConfigTest < ClaudeAgentsTest
     end
 
     def test_add_pattern_appends_and_skip_file_uses_updated_patterns
-      begin
-        ClaudeAgents::Config::SkipPatterns.add_pattern('*.custom')
-        assert ClaudeAgents::Config.skip_file?('notes.custom')
-      ensure
-        ClaudeAgents::Config::SkipPatterns::DEFAULT.delete('*.custom')
-      end
+      ClaudeAgents::Config::SkipPatterns.add_pattern('*.custom')
+
+      assert ClaudeAgents::Config.skip_file?('notes.custom')
+    ensure
+      ClaudeAgents::Config::SkipPatterns::DEFAULT.delete('*.custom')
     end
   end
 end

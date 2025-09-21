@@ -1,3 +1,37 @@
+plugins:
+  - rubocop-minitest
+  - rubocop-rake
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.4
+  Exclude:
+    - "vendor/**/*"
+    - "bin/**/*"
+    - "coverage/**/*"
+    - "agents/**/*"
+
+# Project-specific overrides
+Metrics/BlockLength:
+  Exclude:
+    - "test/**/*"
+    - "Rakefile"
+
+Metrics/MethodLength:
+  Max: 15
+  Exclude:
+    - "test/**/*"
+
+Layout/LineLength:
+  Max: 120
+  Exclude:
+    - "test/**/*"
+
+# Allow multiple expectations in test methods
+Minitest/MultipleAssertions:
+  Enabled: false
+
+# Allow longer test method names for descriptive test cases
 Naming/MethodParameterName:
   AllowedNames:
     - ui

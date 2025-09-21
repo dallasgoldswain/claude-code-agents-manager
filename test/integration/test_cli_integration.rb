@@ -9,7 +9,7 @@ class TestCLIIntegration < ClaudeAgentsTest
 
   def setup
     super
-    @original_home = ENV['HOME']
+    @original_home = Dir.home
   end
 
   def teardown
@@ -19,7 +19,7 @@ class TestCLIIntegration < ClaudeAgentsTest
 
   # Test full doctor command execution with mocked dependencies
   def test_doctor_command_integration
-    with_mock_home do |temp_home|
+    with_mock_home do |_temp_home|
       # Mock repository status checks to avoid actual git operations
       stub_git_commands_for_doctor
 
@@ -45,7 +45,7 @@ class TestCLIIntegration < ClaudeAgentsTest
       File.symlink(test_target, test_link)
       track_symlink(test_link)
 
-      stdout, stderr = run_command(:status)
+      _, stderr = run_command(:status)
 
       # Should show status information
       assert_empty stderr
@@ -55,7 +55,7 @@ class TestCLIIntegration < ClaudeAgentsTest
 
   # Test install command with component selection (mocked)
   def test_install_command_integration
-    with_mock_home do |temp_home|
+    with_mock_home do |_temp_home|
       # Mock the installer to avoid actual repository operations
       mock_installer = mock('Installer')
       # When no options, it calls interactive_install
@@ -65,7 +65,7 @@ class TestCLIIntegration < ClaudeAgentsTest
       )
       ClaudeAgents::Installer.expects(:new).returns(mock_installer)
 
-      stdout, stderr = run_command(:install)
+      _, stderr = run_command(:install)
 
       # Should complete installation
       assert_empty stderr
@@ -76,7 +76,7 @@ class TestCLIIntegration < ClaudeAgentsTest
   def test_setup_command_integration
     component = 'dlabs'
 
-    with_mock_home do |temp_home|
+    with_mock_home do |_temp_home|
       # Mock component validation and configuration
       ClaudeAgents::Config.stubs(:valid_component?).with(component).returns(true)
 
@@ -85,7 +85,7 @@ class TestCLIIntegration < ClaudeAgentsTest
       mock_installer.expects(:install_component).with(component).returns({ created_links: 5 })
       ClaudeAgents::Installer.expects(:new).returns(mock_installer)
 
-      stdout, stderr = run_command(:setup, component)
+      _, stderr = run_command(:setup, component)
 
       # Should complete setup
       assert_empty stderr
@@ -94,14 +94,14 @@ class TestCLIIntegration < ClaudeAgentsTest
 
   # Test remove command integration
   def test_remove_command_integration
-    with_mock_home do |temp_home|
+    with_mock_home do |_temp_home|
       # Mock remover
       mock_remover = mock('Remover')
       # When no argument is passed, it calls interactive_remove
       mock_remover.expects(:interactive_remove).returns(true)
       ClaudeAgents::Remover.expects(:new).returns(mock_remover)
 
-      stdout, stderr = run_command(:remove)
+      _, stderr = run_command(:remove)
 
       # Should complete removal
       assert_empty stderr
@@ -112,7 +112,7 @@ class TestCLIIntegration < ClaudeAgentsTest
   def test_remove_component_integration
     component = 'dlabs'
 
-    with_mock_home do |temp_home|
+    with_mock_home do |_temp_home|
       # Mock component validation
       ClaudeAgents::Config.stubs(:valid_component?).with(component).returns(true)
 
@@ -121,7 +121,7 @@ class TestCLIIntegration < ClaudeAgentsTest
       mock_remover.expects(:remove_component).with(component).returns(true)
       ClaudeAgents::Remover.expects(:new).returns(mock_remover)
 
-      stdout, stderr = run_command(:remove, component)
+      _, stderr = run_command(:remove, component)
 
       # Should complete component removal
       assert_empty stderr
@@ -130,7 +130,7 @@ class TestCLIIntegration < ClaudeAgentsTest
 
   # Test CLI with verbose option
   def test_cli_with_verbose_option
-    with_mock_home do |temp_home|
+    with_mock_home do |_temp_home|
       # Create CLI with verbose option
       options = { 'verbose' => true }
 
@@ -144,7 +144,7 @@ class TestCLIIntegration < ClaudeAgentsTest
 
   # Test CLI with no_color option
   def test_cli_with_no_color_option
-    with_mock_home do |temp_home|
+    with_mock_home do |_temp_home|
       # Create CLI with no_color option
       options = { 'no_color' => true }
 
@@ -158,7 +158,7 @@ class TestCLIIntegration < ClaudeAgentsTest
 
   # Test error handling in integration scenarios
   def test_integration_error_handling
-    with_mock_home do |temp_home|
+    with_mock_home do |_temp_home|
       # Mock an error in the installation process
       ClaudeAgents::Installer.expects(:new).raises(StandardError.new('Integration test error'))
       ClaudeAgents::ErrorHandler.expects(:handle_error).with(
@@ -166,7 +166,7 @@ class TestCLIIntegration < ClaudeAgentsTest
         instance_of(ClaudeAgents::UI)
       )
 
-      stdout, stderr = run_command(:install)
+      run_command(:install)
 
       # Error should be handled gracefully through ErrorHandler
     end
@@ -174,7 +174,7 @@ class TestCLIIntegration < ClaudeAgentsTest
 
   # Test CLI command chaining (running multiple commands)
   def test_command_chaining_integration
-    with_mock_home do |temp_home|
+    with_mock_home do |_temp_home|
       # Mock all necessary dependencies
       mock_installer = mock('Installer')
       mock_installer.stubs(:install_component).returns(true)
@@ -184,7 +184,7 @@ class TestCLIIntegration < ClaudeAgentsTest
 
       # Run multiple commands in sequence
       stdout1, stderr1 = run_command(:version)
-      stdout2, stderr2 = run_command(:setup, 'dlabs')
+      _, stderr2 = run_command(:setup, 'dlabs')
 
       # Both commands should succeed
       assert_empty stderr1
@@ -230,7 +230,7 @@ class TestCLIIntegration < ClaudeAgentsTest
 
         # Create symlink manager and test real filesystem operations
         mock_ui = create_mock_ui
-        symlink_manager = ClaudeAgents::SymlinkManager.new(mock_ui)
+        ClaudeAgents::SymlinkManager.new(mock_ui)
 
         # Create symlinks manually for testing since SymlinkManager's API is different
         source_file = File.join(source_dir, 'test-agent.md')
@@ -243,6 +243,7 @@ class TestCLIIntegration < ClaudeAgentsTest
 
         # Verify symlink was created
         expected_link = File.join(temp_home, '.claude', 'agents', 'dLabs-test-agent.md')
+
         assert File.symlink?(expected_link), 'Should create symlink'
 
         # Verify symlink points to source
@@ -251,8 +252,9 @@ class TestCLIIntegration < ClaudeAgentsTest
         # Test removal
         File.unlink(expected_link) if File.symlink?(expected_link)
         result = !File.exist?(expected_link)
+
         assert result, 'Should successfully remove symlinks'
-        refute File.exist?(expected_link), 'Should remove symlink'
+        refute_path_exists expected_link, 'Should remove symlink'
       end
     end
   end
@@ -261,14 +263,17 @@ class TestCLIIntegration < ClaudeAgentsTest
   def test_configuration_integration
     # Test that real configuration values are accessible
     project_root = ClaudeAgents::Config.project_root
+
     assert Dir.exist?(project_root), 'Project root should exist'
 
     agents_dir = ClaudeAgents::Config.agents_dir
-    assert agents_dir.include?('.claude'), 'Agents directory should be within .claude'
+
+    assert_includes agents_dir, '.claude', 'Agents directory should be within .claude'
 
     components = ClaudeAgents::Config.all_components
+
     assert_instance_of Array, components
-    assert components.size > 0, 'Should have components defined'
+    assert_predicate components.size, :positive?, 'Should have components defined'
 
     # Test component validation with real data
     components.each do |component|
@@ -292,6 +297,7 @@ class TestCLIIntegration < ClaudeAgentsTest
 
     # Test spinner integration
     spinner = ui.spinner('Testing spinner')
+
     assert spinner, 'Should create spinner object'
   end
 

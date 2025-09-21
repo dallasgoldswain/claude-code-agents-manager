@@ -27,7 +27,7 @@ module ClaudeAgents
         raise FileOperationError, "Source file is not readable: #{source}" unless File.readable?(source)
 
         dest_dir = File.dirname(destination)
-        FileUtils.mkdir_p(dest_dir) unless Dir.exist?(dest_dir)
+        FileUtils.mkdir_p(dest_dir)
 
         true
       end

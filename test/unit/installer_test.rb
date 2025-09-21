@@ -13,7 +13,7 @@ class InstallerTest < ClaudeAgentsTest
 
   def teardown
     super
-    Mocha::Mock.reset_all
+    Mocha::Mockery.instance.teardown
   end
 
   # Test initialization
@@ -27,6 +27,7 @@ class InstallerTest < ClaudeAgentsTest
     def test_initializes_repositories_hash
       # Access private instance variable for testing
       repos = @installer.instance_variable_get(:@repositories)
+
       assert_instance_of Hash, repos
     end
   end
@@ -41,7 +42,7 @@ class InstallerTest < ClaudeAgentsTest
         @ui.expects(:with_spinner).yields.returns(true)
         @installer.send(:clone_repository, 'https://github.com/test/repo.git', repo_path)
 
-        # Note: actual cloning is stubbed, so directory won't exist
+        # NOTE: actual cloning is stubbed, so directory won't exist
       end
     end
 
@@ -87,8 +88,9 @@ class InstallerTest < ClaudeAgentsTest
   # Test component installation
   class ComponentInstallationTest < InstallerTest
     def test_installs_dlabs_component
-      with_mock_home do |home|
-        dlabs_path = File.join(Dir.pwd, 'agents', 'dallasLabs')
+      with_mock_home do |_home|
+        test_agents_dir = File.join(File.dirname(__FILE__), '..', 'agents')
+        dlabs_path = File.join(test_agents_dir, 'dallasLabs')
         FileUtils.mkdir_p(dlabs_path)
 
         # Create sample agent files
@@ -149,8 +151,8 @@ class InstallerTest < ClaudeAgentsTest
       @installer.expects(:install).with('wshobson-commands').once
       @installer.expects(:install).with('awesome').once
 
-      @ui.expects(:error).once  # For the failed component
-      @ui.expects(:success).once  # For overall completion
+      @ui.expects(:error).once # For the failed component
+      @ui.expects(:success).once # For overall completion
 
       @installer.install_all
     end
@@ -172,6 +174,7 @@ class InstallerTest < ClaudeAgentsTest
       Open3.expects(:capture3).with('git --version').returns(['git version 2.0.0', '', 0])
 
       result = @installer.send(:check_git_available)
+
       assert result
     end
 
@@ -189,6 +192,7 @@ class InstallerTest < ClaudeAgentsTest
       Open3.expects(:capture3).with('gh --version').returns(['gh version 2.0.0', '', 0])
 
       result = @installer.send(:check_gh_available)
+
       assert result
     end
 
@@ -198,6 +202,7 @@ class InstallerTest < ClaudeAgentsTest
       @ui.expects(:warning).with(includes('GitHub CLI not found'))
 
       result = @installer.send(:check_gh_available)
+
       assert_nil result
     end
   end
@@ -218,7 +223,7 @@ class InstallerTest < ClaudeAgentsTest
       with_mock_home do |home|
         claude_dir = File.join(home, '.claude')
         FileUtils.mkdir_p(claude_dir)
-        FileUtils.chmod(0o444, claude_dir)  # Read-only
+        FileUtils.chmod(0o444, claude_dir) # Read-only
 
         @ui.expects(:error).with(includes('Permission denied'))
 

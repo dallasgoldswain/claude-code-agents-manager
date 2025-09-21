@@ -33,18 +33,15 @@ module ClaudeAgents
 
       def status_data
         build_rows(['Component', 'Status', 'Installed Files']) do
-          Config.all_components.map { |component| status_row(component) }
+          Config::Components.component_status.map { |component| status_row(component) }
         end
       end
 
       def status_row(component)
-        info = Config.component_info(component)
-        installed = component_installed?(component)
-
         [
-          info[:name],
-          status_label(installed),
-          installed_file_count(component, installed).to_s
+          component[:name],
+          status_label(component[:installed]),
+          component[:symlinks].to_s
         ]
       end
 

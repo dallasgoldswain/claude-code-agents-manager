@@ -5,19 +5,19 @@ module ClaudeAgents
     # Terminal helpers for presenting status and notification messages with color.
     module Messages
       def success(message)
-        puts pastel.green("✅ #{message}")
+        puts pastel.green(message)
       end
 
       def error(message)
-        puts pastel.red("❌ #{message}")
+        puts pastel.red(message)
       end
 
       def warn(message)
-        puts pastel.yellow("⚠️  #{message}")
+        puts pastel.yellow(message)
       end
 
       def info(message)
-        puts pastel.blue("ℹ️  #{message}")
+        puts pastel.blue(message)
       end
 
       def highlight(message)
@@ -42,6 +42,19 @@ module ClaudeAgents
 
       def processing(message)
         puts pastel.blue('  PROCESSING: ') + message
+      end
+
+      def format_error(error)
+        error_type = error.class.name.split('::').last.gsub(/Error$/, '')
+        message = "#{error_type} Error: #{error.message}"
+        puts pastel.red(message)
+
+        return unless @verbose_mode && error.backtrace
+
+        puts pastel.dim('Backtrace:')
+        error.backtrace.first(5).each do |line|
+          puts pastel.dim("  #{line}")
+        end
       end
     end
   end

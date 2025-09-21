@@ -15,26 +15,36 @@ module ClaudeAgents
         'examples',
         'setup_*.sh',
         '.*'
-      ]
+      ].freeze
 
-      def self.should_skip?(filename, patterns = DEFAULT)
+      @dynamic_patterns = []
+
+      class << self
+        attr_accessor :dynamic_patterns
+      end
+
+      def self.should_skip?(filename, patterns = all_patterns)
         patterns.any? do |pattern|
           File.fnmatch?(pattern, filename, File::FNM_PATHNAME | File::FNM_DOTMATCH)
         end
       end
 
       def self.add_pattern(pattern)
-        DEFAULT << pattern unless DEFAULT.include?(pattern)
+        @dynamic_patterns << pattern unless @dynamic_patterns.include?(pattern)
+      end
+
+      def self.all_patterns
+        DEFAULT + @dynamic_patterns
       end
 
       def self.patterns_for(component)
         case component.to_s
         when 'dlabs'
-          DEFAULT + ['*.example']
+          all_patterns + ['*.example']
         when 'awesome'
-          DEFAULT + ['node_modules/*']
+          all_patterns + ['node_modules/*']
         else
-          DEFAULT
+          all_patterns
         end
       end
 

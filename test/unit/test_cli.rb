@@ -59,7 +59,7 @@ class TestCLI < ClaudeAgentsTest
     mock_runner.expects(:call).returns(true)
     ClaudeAgents::CLI::Doctor::Runner.expects(:new).returns(mock_runner)
 
-    stdout, stderr = run_command(:doctor)
+    _, stderr = run_command(:doctor)
 
     # Should not crash and should execute runner
     assert_empty stderr
@@ -74,7 +74,7 @@ class TestCLI < ClaudeAgentsTest
     # We need to allow UI.new to be called twice - once in setup, once in run_command
     ClaudeAgents::UI.stubs(:new).returns(mock_ui)
 
-    stdout, stderr = run_command(:status)
+    _, stderr = run_command(:status)
 
     # Should not crash
     assert_empty stderr
@@ -94,13 +94,13 @@ class TestCLI < ClaudeAgentsTest
   def test_setup_command_with_valid_component
     # Mock the installer
     mock_installer = mock('Installer')
-    mock_installer.expects(:install_component).with('dlabs').returns({created_links: 5})
+    mock_installer.expects(:install_component).with('dlabs').returns({ created_links: 5 })
     ClaudeAgents::Installer.expects(:new).returns(mock_installer)
 
     # Mock component validation
     ClaudeAgents::Config.expects(:valid_component?).with('dlabs').returns(true)
 
-    stdout, stderr = run_command(:setup, 'dlabs')
+    _, stderr = run_command(:setup, 'dlabs')
 
     # Should execute without errors
     assert_empty stderr
@@ -110,12 +110,13 @@ class TestCLI < ClaudeAgentsTest
   def test_setup_command_with_invalid_component
     # Mock component validation to return false
     ClaudeAgents::Config.expects(:valid_component?).with('invalid').returns(false)
-    ClaudeAgents::Config.expects(:all_components).returns(['dlabs', 'wshobson_agents'])
+    ClaudeAgents::Config.expects(:all_components).returns(%w[dlabs wshobson_agents])
 
     stdout, stderr = run_command(:setup, 'invalid')
 
     # Should show error about invalid component
     combined_output = stdout + stderr
+
     assert_match(/Invalid component/, combined_output)
   end
 
@@ -126,7 +127,7 @@ class TestCLI < ClaudeAgentsTest
     mock_remover.expects(:interactive_remove).returns(true)
     ClaudeAgents::Remover.expects(:new).returns(mock_remover)
 
-    stdout, stderr = run_command(:remove)
+    _, stderr = run_command(:remove)
 
     # Should execute without crashing
     assert_empty stderr
@@ -139,7 +140,7 @@ class TestCLI < ClaudeAgentsTest
     mock_installer.expects(:interactive_install).returns({})
     ClaudeAgents::Installer.expects(:new).returns(mock_installer)
 
-    stdout, stderr = run_command(:install)
+    _, stderr = run_command(:install)
 
     # Should execute without crashing
     assert_empty stderr
@@ -154,7 +155,7 @@ class TestCLI < ClaudeAgentsTest
       instance_of(ClaudeAgents::UI)
     )
 
-    stdout, stderr = run_command(:doctor)
+    run_command(:doctor)
 
     # Error should be handled gracefully
   end
@@ -162,7 +163,7 @@ class TestCLI < ClaudeAgentsTest
   # Test exit_on_failure? method exists (fixes Thor deprecation)
   def test_exit_on_failure_method_exists
     assert_respond_to ClaudeAgents::CLI, :exit_on_failure?
-    assert_equal true, ClaudeAgents::CLI.exit_on_failure?
+    assert_predicate ClaudeAgents::CLI, :exit_on_failure?
   end
 
   # Test CLI options are properly configured
@@ -174,11 +175,13 @@ class TestCLI < ClaudeAgentsTest
 
     # Test verbose option
     verbose_option = options[:verbose]
+
     assert_equal :boolean, verbose_option.type
     assert_includes verbose_option.aliases, '-v'
 
     # Test no_color option
     no_color_option = options[:no_color]
+
     assert_equal :boolean, no_color_option.type
   end
 
@@ -190,16 +193,14 @@ class TestCLI < ClaudeAgentsTest
     arguments = args.flatten
 
     capture_output do
-      begin
-        # Create fresh CLI instance to avoid state pollution
-        cli = ClaudeAgents::CLI.new
-        cli.invoke(command, arguments, options)
-      rescue SystemExit => e
-        @exit_code = e.status
-      rescue Thor::Error => e
-        # Thor errors should be captured in stderr
-        $stderr.puts e.message
-      end
+      # Create fresh CLI instance to avoid state pollution
+      cli = ClaudeAgents::CLI.new
+      cli.invoke(command, arguments, options)
+    rescue SystemExit => e
+      @exit_code = e.status
+    rescue Thor::Error => e
+      # Thor errors should be captured in stderr
+      warn e.message
     end
   end
 end

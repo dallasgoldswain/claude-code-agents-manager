@@ -4,6 +4,8 @@ module ClaudeAgents
   class Config
     # Repository metadata for upstream agent sources.
     module Repositories
+      module_function
+
       REPOSITORIES = {
         awesome: {
           url: 'VoltAgent/awesome-claude-code-subagents',
@@ -21,6 +23,11 @@ module ClaudeAgents
           description: '56 workflow tools'
         }
       }.freeze
+
+      # Individual repository constants expected by tests
+      AWESOME_AGENTS = REPOSITORIES[:awesome].freeze
+      WSHOBSON_AGENTS = REPOSITORIES[:wshobson_agents].freeze
+      WSHOBSON_COMMANDS = REPOSITORIES[:wshobson_commands].freeze
 
       def repository_for(component)
         REPOSITORIES[component.to_sym]

@@ -32,3 +32,7 @@ module ClaudeAgents
 end
 
 ClaudeAgents.loader
+
+# Ensure multi-class error file is loaded so constants (DirectoryNotFoundError, PermissionError, etc.)
+# are available before tests reference them directly during nested module execution.
+require_relative 'claude_agents/error'

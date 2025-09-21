@@ -13,6 +13,7 @@ module CleanupVerification
       issues.concat(check_temp_directories)
       issues.concat(check_fixture_files)
       issues.concat(check_test_symlinks)
+      issues.concat(check_test_agents_directory)
 
       if issues.empty?
         puts '✅ All test artifacts have been cleaned up properly!'
@@ -61,12 +62,29 @@ module CleanupVerification
 
     # Check for leftover symlinks in test directories
     def check_test_symlinks
-      issues = []
-
       test_dir = File.join(__dir__, '..')
       test_symlinks = Dir.glob("#{test_dir}/**/*").select { |f| File.symlink?(f) }
-      test_symlinks.each do |symlink|
-        issues << "Leftover test symlink: #{symlink}"
+      test_symlinks.map do |symlink|
+        "Leftover test symlink: #{symlink}"
+      end
+    end
+
+    # Check for leftover test agents directory artifacts
+    def check_test_agents_directory
+      issues = []
+      test_agents_dir = File.join(__dir__, '..', 'agents')
+
+      if Dir.exist?(test_agents_dir)
+        leftover_files = Dir.glob("#{test_agents_dir}/**/*").select { |f| File.file?(f) }
+        leftover_dirs = Dir.glob("#{test_agents_dir}/*").select { |d| File.directory?(d) }
+
+        leftover_files.each do |file|
+          issues << "Leftover test agents file: #{file}"
+        end
+
+        leftover_dirs.each do |dir|
+          issues << "Leftover test agents directory: #{dir}"
+        end
       end
 
       issues

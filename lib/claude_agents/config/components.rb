@@ -43,6 +43,11 @@ module ClaudeAgents
         }
       }.freeze
 
+      # Alias for all components list for tests
+      ALL = COMPONENTS.keys.freeze
+
+      module_function
+
       def component_exists?(component)
         COMPONENTS.key?(component.to_sym)
       end
@@ -82,6 +87,42 @@ module ClaudeAgents
         else
           raise ValidationError, "Unknown destination type: #{info[:destination]}"
         end
+      end
+
+      def project_root
+        # Get the root directory of the project (where this gem's source code lives)
+        File.expand_path('../../..', __dir__)
+      end
+
+      def agents_dir
+        # This would typically come from the Directories module
+        File.join(Dir.home, '.claude', 'agents')
+      end
+
+      def commands_dir
+        # This would typically come from the Directories module
+        File.join(Dir.home, '.claude', 'commands')
+      end
+
+      def component_status
+        all_components.map do |component|
+          destination_dir = destination_dir_for(component)
+          installed = destination_dir && Dir.exist?(destination_dir)
+          symlinks = installed ? count_symlinks_for_component(component) : 0
+
+          {
+            name: component.to_s,
+            installed: installed,
+            symlinks: symlinks
+          }
+        end
+      end
+
+      def count_symlinks_for_component(component)
+        destination_dir = destination_dir_for(component)
+        return 0 unless destination_dir && Dir.exist?(destination_dir)
+
+        Dir.glob(File.join(destination_dir, '*')).count { |file| File.symlink?(file) }
       end
     end
   end
