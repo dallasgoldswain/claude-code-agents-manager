@@ -41,13 +41,15 @@ class TestCLIIntegration < ClaudeAgentsTest
 
       # Create test symlinks
       test_target = create_fixture_file('test-agent.md', '# Test Agent')
-      File.symlink(test_target, File.join(agents_dir, 'dLabs-test-agent.md'))
+      test_link = File.join(agents_dir, 'dLabs-test-agent.md')
+      File.symlink(test_target, test_link)
+      track_symlink(test_link)
 
       stdout, stderr = run_command(:status)
 
       # Should show status information
       assert_empty stderr
-      # Note: Specific output depends on UI implementation, just verify it runs
+      # NOTE: Specific output depends on UI implementation, just verify it runs
     end
   end
 
@@ -80,7 +82,7 @@ class TestCLIIntegration < ClaudeAgentsTest
 
       # Mock installer
       mock_installer = mock('Installer')
-      mock_installer.expects(:install_component).with(component).returns({created_links: 5})
+      mock_installer.expects(:install_component).with(component).returns({ created_links: 5 })
       ClaudeAgents::Installer.expects(:new).returns(mock_installer)
 
       stdout, stderr = run_command(:setup, component)
@@ -234,6 +236,7 @@ class TestCLIIntegration < ClaudeAgentsTest
         source_file = File.join(source_dir, 'test-agent.md')
         dest_link = File.join(test_config[:dest_dir], 'dLabs-test-agent.md')
         File.symlink(source_file, dest_link)
+        track_symlink(dest_link)
         result = File.symlink?(dest_link)
 
         assert result, 'Should successfully create symlinks'
@@ -310,22 +313,21 @@ class TestCLIIntegration < ClaudeAgentsTest
     arguments = args.flatten
 
     capture_output do
-      begin
-        # Use a fresh CLI instance for each command
-        cli = ClaudeAgents::CLI.new
-        cli.options = Thor::CoreExt::HashWithIndifferentAccess.new(options)
+      # Use a fresh CLI instance for each command
+      cli = ClaudeAgents::CLI.new
+      cli.options = Thor::CoreExt::HashWithIndifferentAccess.new(options)
 
-        # Invoke the command
-        cli.invoke(command, arguments)
-      rescue SystemExit => e
-        @exit_code = e.status
-      rescue Thor::Error => e
-        $stderr.puts e.message
-      rescue StandardError => e
-        # Let other errors propagate for debugging
-        raise unless e.message.include?('Test error') || e.message.include?('Mock')
-        $stderr.puts e.message
-      end
+      # Invoke the command
+      cli.invoke(command, arguments)
+    rescue SystemExit => e
+      @exit_code = e.status
+    rescue Thor::Error => e
+      warn e.message
+    rescue StandardError => e
+      # Let other errors propagate for debugging
+      raise unless e.message.include?('Test error') || e.message.include?('Mock')
+
+      warn e.message
     end
   end
 end

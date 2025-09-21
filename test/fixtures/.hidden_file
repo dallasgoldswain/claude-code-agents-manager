@@ -1,8 +1,0 @@
-This is a hidden file that should be skipped by skip patterns.
-
-It's used to test that the file processing system correctly
-ignores files that match skip patterns like ".*" (hidden files).
-
-Content: Hidden test file
-Purpose: Skip pattern testing
-Expected: Should be ignored during symlink creation

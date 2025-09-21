@@ -4,12 +4,13 @@
 Claude Agents provides a Ruby-based command-line interface for installing, managing, and inspecting curated Claude Code agent collections. The CLI orchestrates symlink management, repository coordination, and status reporting for several upstream agent sets (dLabs, wshobson, Awesome Claude, and wshobson commands). The application centers on `ClaudeAgents::CLI` (Thor commands) with rich terminal output handled by `ClaudeAgents::UI` and supporting service objects in `lib/claude_agents/`.
 
 ## Build and Test Commands
+- Install Ruby with `mise install` (uses the version in `mise.toml`, currently Ruby 3.4.6).
 - Install Ruby dependencies: `bundle install`
 - Run the CLI locally: `./bin/claude-agents <command>` (e.g., `install`, `status`, `remove`)
 - Package checks via RuboCop: `bundle exec rubocop`
 - Automated test suite: `bundle exec rspec`
 
-> Requires Ruby ≥ 3.0 and Bundler matching `Gemfile.lock` (2.6.9 at time of writing).
+> Requires Ruby via `mise` (current config pins Ruby 3.4.6) and Bundler matching `Gemfile.lock` (2.6.9 at time of writing).
 
 ## Code Style Guidelines
 - Follow the style enforced by RuboCop (`bundle exec rubocop`); project metrics limits are tuned for short, focused methods and modular structure.

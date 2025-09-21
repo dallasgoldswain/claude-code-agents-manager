@@ -59,7 +59,7 @@ class SymlinkManagerTest < ClaudeAgentsTest
           expected_link = File.join(dest_dir, "dLabs-#{filename}")
           expected_target = File.join(source_dir, filename)
 
-          # Note: In test environment, actual symlinks might not be created due to mocking
+          # NOTE: In test environment, actual symlinks might not be created due to mocking
           # We verify through expectations instead
         end
 
@@ -155,6 +155,8 @@ class SymlinkManagerTest < ClaudeAgentsTest
           target = "/tmp/#{link_name}"
           FileUtils.touch(target)
           File.symlink(target, link_path)
+          # Track for cleanup
+          track_symlink(link_path)
         end
 
         @symlink_manager.remove_symlinks('dlabs')
@@ -176,6 +178,7 @@ class SymlinkManagerTest < ClaudeAgentsTest
         # Create broken symlink (target doesn't exist)
         broken_link = File.join(dest_dir, 'dLabs-broken.md')
         File.symlink('/nonexistent/target', broken_link)
+        track_symlink(broken_link)
 
         @ui.expects(:verbose).with(includes('broken symlink'))
 
@@ -193,6 +196,7 @@ class SymlinkManagerTest < ClaudeAgentsTest
         link_path = File.join(dest_dir, 'dLabs-test.md')
         FileUtils.touch('/tmp/test.md')
         File.symlink('/tmp/test.md', link_path)
+        track_symlink(link_path)
 
         @ui.expects(:confirm).with(includes('Remove')).returns(true)
 
@@ -210,6 +214,7 @@ class SymlinkManagerTest < ClaudeAgentsTest
         link_path = File.join(dest_dir, 'dLabs-test.md')
         FileUtils.touch('/tmp/test.md')
         File.symlink('/tmp/test.md', link_path)
+        track_symlink(link_path)
 
         @ui.expects(:confirm).returns(false)
         @ui.expects(:info).with(includes('Cancelled'))
@@ -235,7 +240,7 @@ class SymlinkManagerTest < ClaudeAgentsTest
       with_mock_home do |home|
         dest_dir = File.join(home, '.claude', 'agents')
         FileUtils.mkdir_p(dest_dir)
-        FileUtils.chmod(0o444, dest_dir)  # Read-only
+        FileUtils.chmod(0o444, dest_dir) # Read-only
 
         source_dir = File.join(Dir.pwd, 'agents', 'dallasLabs')
         FileUtils.mkdir_p(source_dir)

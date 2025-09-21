@@ -1,7 +1,0 @@
-Temporary file content for testing skip patterns.
-
-This file should be skipped when *.tmp is in the skip_patterns
-configuration.
-
-Test data: temporary file handling
-Expected behavior: ignored during processing
