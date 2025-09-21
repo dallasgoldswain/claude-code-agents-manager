@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bundle:*)",
+      "Bash(rake:*)",
+      "Bash(ruby:*)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(rails db:migrate:*)",
+      "Bash(rake test:*)"
+    ],
+    "ask": [
+      "Bash(bundle update:*)",
+      "Bash(git push:*)",
+      "Bash(gem push:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": {
+      "Edit": "bash -lc 'if [ -f Gemfile.lock ]; then bundle exec rubocop -A || true; fi; if [ -d test ]; then bundle exec rake test || true; fi'"
+    }
+  },
+  "model": "claude-3-5-sonnet-20241022",
+  "outputStyle": "Concise"
+}
