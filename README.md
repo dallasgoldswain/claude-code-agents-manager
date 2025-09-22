@@ -1,5 +1,7 @@
 # Claude Agents Collection
 
+⚠️ **This is a side project testing out various things, use at your own risk**
+
 A comprehensive agent management system that aggregates multiple Claude Code agent collections into a unified workspace, providing access to 200+ specialized AI agents and automation tools.
 
 ## Overview
