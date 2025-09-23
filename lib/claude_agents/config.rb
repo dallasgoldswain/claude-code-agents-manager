@@ -58,7 +58,7 @@ module ClaudeAgents
 
     class << self
       def claude_dir
-        @claude_dir ||= File.expand_path("~/.claude")
+        @claude_dir ||= File.expand_path(ENV["CLAUDE_DIR"] || "~/.claude")
       end
 
       def agents_dir
@@ -156,6 +156,16 @@ module ClaudeAgents
         raise ValidationError, "Unknown component: #{component}" unless info
 
         info
+      end
+
+      # Reset cached directory paths (for testing)
+      def reset_cache!
+        @claude_dir = nil
+        @agents_dir = nil
+        @commands_dir = nil
+        @tools_dir = nil
+        @workflows_dir = nil
+        @agents_source_dir = nil
       end
     end
   end

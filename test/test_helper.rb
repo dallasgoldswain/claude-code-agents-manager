@@ -322,4 +322,10 @@ class IntegrationTest < Minitest::Test
   include CLIAssertions
   include FilesystemHelpers
   include CLIHelpers
+
+  def setup
+    super
+    # Reset Config cache to pick up environment variables
+    ClaudeAgents::Config.reset_cache!
+  end
 end

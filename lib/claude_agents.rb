@@ -43,7 +43,10 @@ module ClaudeAgents
       /^contributing/i,
       /^examples/i,
       /^setup_.*\.sh$/,
-      /^\./
+      /^\./, # Hidden files
+      /\.json$/, # JSON configuration files
+      /\.txt$/, # Text files
+      /\.log$/ # Log files
     ]
   }.freeze
 end
