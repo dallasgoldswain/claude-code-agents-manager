@@ -35,7 +35,7 @@ bundle install
 # Run the enhanced Ruby CLI installer (recommended)
 ./bin/claude-agents install
 
-# Or use the legacy bash installer
+# Legacy installer (deprecated - use Ruby CLI above)
 ./install.sh
 ```
 
@@ -69,19 +69,16 @@ This will:
 ./bin/claude-agents doctor
 ```
 
-**Legacy Bash Scripts:**
+**Legacy Bash Scripts (Deprecated):**
 ```bash
-# dLabs agents only
-./bin/setup_agents.sh
+# Complete setup (use Ruby CLI instead)
+./install.sh
 
-# wshobson agents
-./bin/setup_wshobson_agents_symlinks.sh
-
-# wshobson commands
-./bin/setup_wshobson_commands_symlinks.sh
-
-# Awesome Claude Code subagents
-./bin/setup_awesome_agents_symlinks.sh
+# Individual component setup (use ./bin/claude-agents setup <component> instead)
+./bin/setup_agents.sh                      # dLabs agents
+./bin/setup_wshobson_agents_symlinks.sh    # wshobson agents
+./bin/setup_wshobson_commands_symlinks.sh  # wshobson commands
+./bin/setup_awesome_agents_symlinks.sh     # Awesome Claude Code subagents
 ```
 
 ## Agent Organization
@@ -178,14 +175,14 @@ The wshobson commands enable sophisticated multi-agent orchestration:
 claude-agents/
 ├── bin/                                    # Scripts and executables
 │   ├── claude-agents                       # Ruby CLI (primary interface)
-│   ├── install.sh                          # Legacy bash installer
-│   ├── setup_agents.sh                     # dLabs agents setup
-│   ├── setup_wshobson_agents_symlinks.sh   # wshobson agents setup
-│   ├── setup_wshobson_commands_symlinks.sh # wshobson commands setup
-│   ├── setup_awesome_agents_symlinks.sh    # awesome agents setup
-│   └── remove_*.sh                         # Removal scripts
+│   ├── test                                # Test runner script
+│   ├── install.sh                          # Legacy bash installer (deprecated)
+│   ├── setup_*.sh                          # Legacy setup scripts (deprecated)
+│   └── remove_*.sh                         # Legacy removal scripts (deprecated)
 ├── lib/                                    # Ruby CLI implementation
+├── test/                                   # Test suite (unit & integration)
 ├── Gemfile                                 # Ruby dependencies
+├── Rakefile                                # Development and testing tasks
 └── agents/                                 # Agent collections (auto-created)
     ├── dallasLabs/                         # Local agent definitions
     ├── awesome-claude-code-subagents/      # VoltAgent collection
@@ -212,6 +209,137 @@ claude-agents/
 ./bin/claude-agents help                    # Show help
 ```
 
+## Development Workflow
+
+### Rake Tasks
+
+The project includes comprehensive Rake tasks for development, testing, and quality assurance:
+
+#### Testing Tasks
+
+```bash
+# Run all tests
+rake test                                   # Run complete test suite
+rake test:all                               # Same as above
+rake test:unit                              # Unit tests only
+rake test:integration                       # Integration tests only
+
+# Specialized test runs
+rake test:performance                       # Performance-focused tests
+rake test:coverage                          # Tests with coverage reporting
+rake test:fast_fail                         # Stop on first failure with minimal output
+rake test:failures_only                     # Show only test failures
+rake test:watch                             # Continuous testing (requires entr)
+
+# Individual test execution
+rake test:file[path/to/test_file.rb]        # Run specific test file
+rake test:method[TestClass,test_method]     # Run specific test method
+
+# Test reporting
+rake test:report                            # Generate detailed test report
+
+# Custom test runner
+bin/test                                    # Run all tests with custom runner
+bin/test --suite unit                       # Run specific test suite
+bin/test --verbose --parallel               # Run with options
+```
+
+#### Code Quality Tasks
+
+```bash
+# Linting
+rake rubocop                                # Run RuboCop linter
+rake rubocop:autocorrect                    # Auto-fix RuboCop issues
+rake rubocop:autocorrect_all                # Auto-fix all issues (including unsafe)
+```
+
+#### Development Tasks
+
+```bash
+# Environment setup
+rake dev:setup                             # Setup development environment
+rake dev:clean                             # Clean test artifacts
+rake dev:check                             # Full check (tests + linting)
+rake dev:benchmark                          # Benchmark test execution time
+
+# Default task
+rake                                        # Run tests + linting
+```
+
+#### CI/CD Tasks
+
+```bash
+# Continuous Integration
+rake ci:local                               # Run full CI pipeline locally
+rake ci:quick                               # Quick CI check (unit tests + linting)
+```
+
+#### Documentation Tasks
+
+```bash
+# Documentation generation
+rake doc:tests                              # Generate test documentation
+```
+
+### Architecture Overview
+
+The Ruby CLI is built using a service-oriented architecture:
+
+```
+lib/
+├── claude_agents.rb                        # Main module with version
+├── claude_agents_cli.rb                    # Thor-based CLI interface
+└── claude_agents/
+    ├── config.rb                           # Centralized configuration
+    ├── installer.rb                        # Component installation service
+    ├── remover.rb                           # Component removal service
+    ├── symlink_manager.rb                  # Symlink creation and management
+    ├── file_processor.rb                   # File processing and naming
+    ├── ui.rb                               # TTY-based user interface
+    └── errors.rb                           # Custom error classes
+```
+
+**Service Layer Design:**
+- **Config**: Manages component definitions and paths
+- **Installer**: Handles repository cloning and setup
+- **Remover**: Manages safe component removal
+- **SymlinkManager**: Creates organized symlink structures
+- **FileProcessor**: Applies naming conventions and file transformations
+- **UI**: Provides colored output, progress indicators, and user interaction
+
+### Testing Architecture
+
+The project implements a comprehensive testing strategy with **91+ tests** covering all functionality:
+
+```
+test/
+├── test_helper.rb                          # Central configuration and base classes
+├── .minitest.rb                            # Minitest configuration
+├── unit/                                   # Service class tests (70+ tests)
+│   ├── config_test.rb                      # Configuration management (25 tests)
+│   ├── symlink_manager_test.rb             # Symlink operations (19 tests)
+│   ├── file_processor_test.rb              # File processing (14 tests)
+│   └── error_handling_test.rb              # Error scenarios (13 tests)
+├── integration/                            # End-to-end tests (21+ tests)
+│   └── cli_commands_test.rb                # Complete CLI workflows
+└── support/                                # Reusable test utilities
+    ├── filesystem_helpers.rb               # File operations and assertions
+    ├── cli_helpers.rb                      # CLI command testing utilities
+    └── test_fixtures.rb                    # Test data generation and fixtures
+```
+
+**Testing Features:**
+- **91+ comprehensive tests**: Unit, integration, and performance tests
+- **TDD approach**: Tests written before implementation
+- **Real data operations**: No mocking - uses actual file operations
+- **Performance benchmarks**: Critical operations under 1s execution time
+- **Memory monitoring**: Large operations under 50MB growth
+- **Environment isolation**: Each test uses isolated temporary directories
+- **Minitest framework**: Ruby's built-in testing with custom reporters
+- **Continuous testing**: Watch mode and parallel execution support
+
+For detailed testing information, see [TESTING.md](TESTING.md)
+
 ## Updating Collections
 
 **Ruby CLI (Recommended):**
@@ -223,15 +351,15 @@ claude-agents/
 ./bin/claude-agents doctor  # Check repository status
 ```
 
-**Legacy Method:**
+**Manual Repository Updates:**
 ```bash
-# Update all external repositories
-./bin/install.sh
-
-# Or update individual collections
+# Update individual collections manually
 cd agents/awesome-claude-code-subagents && git pull && cd ../..
 cd agents/wshobson-agents && git pull && cd ../..
 cd agents/wshobson-commands && git pull && cd ../..
+
+# Legacy installer (deprecated - use Ruby CLI instead)
+./install.sh
 ```
 
 ## Contributing

@@ -1,0 +1,64 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bundle:*)",
+      "Bash(rake:*)",
+      "Bash(ruby:*)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(rails db:migrate:*)",
+      "Bash(rake test:*)"
+    ],
+    "ask": ["Bash(bundle update:*)", "Bash(git push:*)", "Bash(gem push:*)"],
+    "deny": ["Read(./.env)", "Read(./.env.*)", "Read(./secrets/**)"]
+  },
+  "model": "sonnet[1m]",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "Edit": "bash -lc 'if [ -f Gemfile.lock ]; then bundle exec rubocop -A || true; fi; if [ -d test ]; then bundle exec rake test || true; fi'"
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run /Users/harper/.claude/hooks/utilities/UserPromptSubmit/append_ultrathink.py"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": []
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": []
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": []
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": []
+      }
+    ]
+  },
+  "outputStyle": "Concise",
+  "statusLine": {
+    "type": "command",
+    "command": "input=$(cat); model=$(echo \"$input\" | jq -r '.model.display_name'); workspace=$(echo \"$input\" | jq -r '.workspace.current_dir' | sed 's|.*/||'); output_style=$(echo \"$input\" | jq -r '.output_style.name'); printf '\\e[48;2;49;50;68;38;2;205;214;244m  %s \\e[48;2;250;179;135;38;2;49;50;68m\\e[38;2;24;24;37m  %s \\e[48;2;166;227;161;38;2;250;179;135m\\e[38;2;24;24;37m 󰲋 %s \\e[48;2;203;166;247;38;2;166;227;161m\\e[38;2;24;24;37m  %s \\e[0m\\e[38;2;203;166;247m\\e[0m' \"$model\" \"$output_style\" \"$workspace\" \"$(date +%H:%M)\""
+  },
+  "feedbackSurveyState": {
+    "lastShownTime": 1754360713440
+  }
+}

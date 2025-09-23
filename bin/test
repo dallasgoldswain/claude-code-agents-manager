@@ -1,0 +1,149 @@
+#!/usr/bin/env ruby
+# ABOUTME: Test runner script for Claude Agents CLI
+# ABOUTME: Provides simple command-line interface for running different test suites
+
+# frozen_string_literal: true
+
+require "optparse"
+require "pathname"
+
+# Add lib directory to load path
+root_dir = Pathname.new(__dir__).parent
+$LOAD_PATH.unshift(root_dir.join("lib"))
+$LOAD_PATH.unshift(root_dir.join("test"))
+
+class TestRunner
+  VALID_SUITES = %w[all unit integration performance].freeze
+
+  def initialize
+    @options = {
+      suite: "all",
+      verbose: false,
+      parallel: false,
+      seed: nil
+    }
+    parse_options
+  end
+
+  def run
+    puts "🧪 Running #{@options[:suite]} tests..."
+    puts "📁 Working directory: #{Dir.pwd}"
+    puts "🌱 Seed: #{@options[:seed]}" if @options[:seed]
+    puts
+
+    case @options[:suite]
+    when "all"
+      run_all_tests
+    when "unit"
+      run_unit_tests
+    when "integration"
+      run_integration_tests
+    when "performance"
+      run_performance_tests
+    else
+      puts "❌ Invalid test suite: #{@options[:suite]}"
+      puts "   Valid options: #{VALID_SUITES.join(', ')}"
+      exit 1
+    end
+  end
+
+  private
+
+  def parse_options
+    OptionParser.new do |opts|
+      opts.banner = "Usage: bin/test [options]"
+
+      opts.on("-s", "--suite SUITE", VALID_SUITES,
+              "Test suite to run (all, unit, integration, performance)") do |suite|
+        @options[:suite] = suite
+      end
+
+      opts.on("-v", "--verbose", "Verbose output") do
+        @options[:verbose] = true
+      end
+
+      opts.on("-p", "--parallel", "Run tests in parallel") do
+        @options[:parallel] = true
+      end
+
+      opts.on("--seed SEED", Integer, "Random seed for test order") do |seed|
+        @options[:seed] = seed
+      end
+
+      opts.on("-h", "--help", "Show this help") do
+        puts opts
+        exit
+      end
+    end.parse!
+  end
+
+  def run_all_tests
+    cmd = base_test_command(["test/**/*_test.rb"])
+    system(cmd)
+  end
+
+  def run_unit_tests
+    cmd = base_test_command(["test/unit/**/*_test.rb"])
+    system(cmd)
+  end
+
+  def run_integration_tests
+    cmd = base_test_command(["test/integration/**/*_test.rb"])
+    system(cmd)
+  end
+
+  def run_performance_tests
+    puts "⚡ Running performance-specific tests..."
+
+    # Load test files and run performance tests specifically
+    test_files = Dir["test/**/*_test.rb"]
+
+    require_relative "../test/test_helper"
+
+    test_files.each { |f| require_relative "../#{f}" }
+
+    performance_tests = []
+
+    Minitest::Test.subclasses.each do |test_class|
+      test_class.runnable_methods.each do |method|
+        if method.include?("performance") || method.include?("large") || method.include?("benchmark")
+          performance_tests << "#{test_class}##{method}"
+        end
+      end
+    end
+
+    if performance_tests.empty?
+      puts "📊 No performance tests found"
+    else
+      puts "📊 Found #{performance_tests.length} performance tests:"
+      performance_tests.each { |test| puts "  • #{test}" }
+      puts
+
+      # Run performance tests
+      cmd = "#{base_test_command(['test/**/*_test.rb'])} --name=/performance|large|benchmark/"
+      system(cmd)
+    end
+  end
+
+  def base_test_command(patterns)
+    cmd = ["ruby"]
+    cmd += ["-Itest:lib"]
+    cmd += ["--"] if @options[:verbose]
+
+    # Add seed if specified
+    ENV["TESTOPTS"] = "--seed=#{@options[:seed]}" if @options[:seed]
+
+    # Set parallel execution
+    ENV["MT_CPU"] = "4" if @options[:parallel]
+
+    # Add verbose flag
+    ENV["MINITEST_VERBOSE"] = "1" if @options[:verbose]
+
+    # Build the command to run Minitest
+    test_pattern = patterns.join(" ")
+    "#{cmd.join(' ')} -e \"Dir.glob('#{test_pattern}').each { |f| require './\#{f}' }\""
+  end
+end
+
+# Run the test runner
+TestRunner.new.run

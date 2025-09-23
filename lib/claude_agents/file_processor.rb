@@ -16,8 +16,8 @@ module ClaudeAgents
       return true if Config.skip_file?(filename)
 
       # Additional specific skips
-      return true if filename.start_with?('.')
-      return true if file_path.include?('/examples/')
+      return true if filename.start_with?(".")
+      return true if file_path.include?("/examples/")
 
       false
     end
@@ -25,24 +25,33 @@ module ClaudeAgents
     def eligible_files_in_directory(directory)
       return [] unless Dir.exist?(directory)
 
-      Dir.glob(File.join(directory, '**/*'))
+      Dir.glob(File.join(directory, "**/*"))
          .select { |file| File.file?(file) }
          .reject { |file| should_skip_file?(file) }
     end
 
     def process_dlabs_files(source_dir)
+      process_generic_files(source_dir, "dLabs-")
+    end
+
+    def process_generic_files(source_dir, prefix)
       return [] unless Dir.exist?(source_dir)
 
-      files = Dir.glob(File.join(source_dir, '*'))
-                 .select { |file| File.file?(file) }
-                 .reject { |file| should_skip_file?(file) }
+      begin
+        files = Dir.glob(File.join(source_dir, "*"))
+                   .select { |file| File.file?(file) }
+                   .reject { |file| should_skip_file?(file) }
+      rescue Errno::EACCES => e
+        raise FileOperationError, "Permission denied accessing directory: #{source_dir} - #{e.message}"
+      end
 
       files.map do |file|
         filename = File.basename(file)
+        prefixed_name = prefix ? "#{prefix}#{filename}" : filename
         {
           source: file,
-          destination: File.join(Config.agents_dir, "dLabs-#{filename}"),
-          display_name: "dLabs-#{filename}"
+          destination: File.join(Config.agents_dir, prefixed_name),
+          display_name: prefixed_name
         }
       end
     end
@@ -50,7 +59,7 @@ module ClaudeAgents
     def process_wshobson_agent_files(source_dir)
       return [] unless Dir.exist?(source_dir)
 
-      files = Dir.glob(File.join(source_dir, '*'))
+      files = Dir.glob(File.join(source_dir, "*"))
                  .select { |file| File.file?(file) }
                  .reject { |file| should_skip_file?(file) }
 
@@ -70,9 +79,9 @@ module ClaudeAgents
       file_mappings = []
 
       # Process tools directory
-      tools_dir = File.join(source_dir, 'tools')
+      tools_dir = File.join(source_dir, "tools")
       if Dir.exist?(tools_dir)
-        Dir.glob(File.join(tools_dir, '*')).each do |file|
+        Dir.glob(File.join(tools_dir, "*")).each do |file|
           next unless File.file?(file) && !should_skip_file?(file)
 
           filename = File.basename(file)
@@ -85,9 +94,9 @@ module ClaudeAgents
       end
 
       # Process workflows directory
-      workflows_dir = File.join(source_dir, 'workflows')
+      workflows_dir = File.join(source_dir, "workflows")
       if Dir.exist?(workflows_dir)
-        Dir.glob(File.join(workflows_dir, '*')).each do |file|
+        Dir.glob(File.join(workflows_dir, "*")).each do |file|
           next unless File.file?(file) && !should_skip_file?(file)
 
           filename = File.basename(file)
@@ -100,7 +109,7 @@ module ClaudeAgents
       end
 
       # Process root directory files (with wshobson- prefix)
-      Dir.glob(File.join(source_dir, '*')).each do |file|
+      Dir.glob(File.join(source_dir, "*")).each do |file|
         next unless File.file?(file) && !should_skip_file?(file)
 
         filename = File.basename(file)
@@ -115,13 +124,13 @@ module ClaudeAgents
     end
 
     def process_awesome_agent_files(source_dir)
-      categories_dir = File.join(source_dir, 'categories')
+      categories_dir = File.join(source_dir, "categories")
       return [] unless Dir.exist?(categories_dir)
 
       file_mappings = []
 
       # Find all .md files in categories directory
-      Dir.glob(File.join(categories_dir, '**/*.md')).each do |file|
+      Dir.glob(File.join(categories_dir, "**/*.md")).each do |file|
         next if should_skip_file?(file)
 
         # Get relative path from categories directory
@@ -129,15 +138,15 @@ module ClaudeAgents
 
         # Extract category folder name and remove numeric prefix
         category_folder = rel_path.dirname.to_s
-        category_name = category_folder.split('-', 2).last # Remove everything up to and including first dash
+        category_name = category_folder.split("-", 2).last # Remove everything up to and including first dash
         filename = File.basename(file)
 
         # Create flattened filename with category prefix
-        flattened_filename = if category_name != '.'
-          "#{category_name}-#{filename}"
-        else
-          filename
-        end
+        flattened_filename = if category_name == "."
+                               filename
+                             else
+                               "#{category_name}-#{filename}"
+                             end
 
         file_mappings << {
           source: file,
@@ -157,15 +166,19 @@ module ClaudeAgents
       source_dir = Config.source_dir_for(component)
 
       unless Dir.exist?(source_dir)
-        raise ValidationError,
+        raise FileOperationError,
               "Source directory for #{component} does not exist: #{source_dir}. " \
-              'Please run the installation first.'
+              "Please run the installation first."
       end
 
       source_dir
     end
 
     def get_file_mappings_for_component(component)
+      unless Config.valid_component?(component)
+        raise ValidationError, "Invalid component: #{component}"
+      end
+
       source_dir = validate_source_directory(component)
 
       case component.to_sym
@@ -177,6 +190,9 @@ module ClaudeAgents
         process_wshobson_command_files(source_dir)
       when :awesome
         process_awesome_agent_files(source_dir)
+      when :test
+        # For testing purposes, use generic file processing
+        process_generic_files(source_dir, Config.prefix_for(component))
       else
         raise ValidationError, "Unknown component: #{component}"
       end
@@ -186,9 +202,7 @@ module ClaudeAgents
       source = mapping[:source]
       destination = mapping[:destination]
 
-      unless File.exist?(source)
-        raise FileOperationError, "Source file does not exist: #{source}"
-      end
+      raise FileOperationError, "Source file does not exist: #{source}" unless File.exist?(source)
 
       unless File.readable?(source)
         raise FileOperationError, "Source file is not readable: #{source}"
@@ -196,9 +210,70 @@ module ClaudeAgents
 
       # Ensure destination directory exists
       dest_dir = File.dirname(destination)
-      FileUtils.mkdir_p(dest_dir) unless Dir.exist?(dest_dir)
+      FileUtils.mkdir_p(dest_dir)
 
       true
+    end
+
+    private
+
+    def find_markdown_files(directory)
+      return [] unless Dir.exist?(directory)
+
+      Dir.glob(File.join(directory, "**/*.md"))
+         .select { |file| File.file?(file) }
+         .reject { |file| should_skip_file?(file) }
+    end
+
+    def generate_destination_path(destination_dir, relative_path, prefix)
+      # Handle special command structure (tools/ and workflows/)
+      if relative_path.start_with?("tools/", "workflows/")
+        # Preserve directory structure for commands
+        filename = File.basename(relative_path)
+        if prefix
+          prefixed_filename = "#{prefix}#{filename}"
+        else
+          prefixed_filename = filename
+        end
+        directory = File.dirname(relative_path)
+        return File.join(destination_dir, directory, prefixed_filename)
+      end
+
+      # For other paths with directories, apply prefix first then flatten
+      if relative_path.include?("/")
+        directory = File.dirname(relative_path)
+        filename = File.basename(relative_path)
+
+        # Apply prefix to filename first
+        if prefix
+          prefixed_filename = "#{prefix}#{filename}"
+        else
+          prefixed_filename = filename
+        end
+
+        # Then create flattened name only if no prefix (for category flattening)
+        if prefix
+          final_filename = prefixed_filename
+        else
+          final_filename = "#{directory}-#{prefixed_filename}"
+        end
+      else
+        if prefix
+          final_filename = "#{prefix}#{relative_path}"
+        else
+          final_filename = relative_path
+        end
+      end
+
+      File.join(destination_dir, final_filename)
+    end
+
+    def generate_display_name(filename, prefix)
+      if prefix
+        "#{prefix}#{filename}"
+      else
+        filename
+      end
     end
   end
 end

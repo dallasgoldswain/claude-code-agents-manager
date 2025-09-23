@@ -13,8 +13,8 @@ module ClaudeAgents
 
     # Interactive installation with component selection
     def interactive_install
-      ui.title('Claude Code Agent Installer')
-      ui.info('Welcome to the interactive Claude Code agent installer!')
+      ui.title("Claude Code Agent Installer")
+      ui.info("Welcome to the interactive Claude Code agent installer!")
       ui.newline
 
       # Check for existing installations and offer removal
@@ -24,19 +24,19 @@ module ClaudeAgents
       selected_components = ui.component_selection_menu
 
       if selected_components.empty?
-        ui.info('No components selected. Exiting.')
+        ui.info("No components selected. Exiting.")
         return
       end
 
       ui.newline
-      ui.section('Installation Plan')
+      ui.section("Installation Plan")
       selected_components.each do |component|
         info = Config.component_info(component)
         ui.highlight("• #{info[:name]} - #{info[:description]}")
       end
 
       ui.newline
-      return unless ui.confirm('Proceed with installation?')
+      return unless ui.confirm("Proceed with installation?")
 
       # Ensure repositories are available
       ensure_repositories(selected_components)
@@ -47,7 +47,12 @@ module ClaudeAgents
 
     # Install specific components
     def install_component(component)
-      ui.section("Installing #{Config.component_info(component)[:name]}")
+      begin
+        info = Config.component_info(component) # raises ValidationError if invalid
+        ui.section("Installing #{info[:name]}")
+      rescue ValidationError => e
+        raise InstallationError, e.message
+      end
 
       case component.to_sym
       when :dlabs
@@ -59,14 +64,15 @@ module ClaudeAgents
       when :awesome
         install_awesome_agents
       else
-        raise ValidationError, "Unknown component: #{component}"
+        # Should not be reached because component_info validated the component.
+        raise InstallationError, "Handler not implemented for component: #{component}"
       end
     end
 
     # Install multiple components with summary
     def install_components(components)
       ui.newline
-      ui.section('Installing Components')
+      ui.section("Installing Components")
 
       Config.ensure_directories!
       results = {}
@@ -90,7 +96,7 @@ module ClaudeAgents
 
       ui.display_installation_summary(results)
       ui.newline
-      ui.success('Installation completed!')
+      ui.success("Installation completed!")
     end
 
     private
@@ -100,7 +106,7 @@ module ClaudeAgents
       repos_needed = components.select { |comp| Config.repository_for(comp) }
       return if repos_needed.empty?
 
-      ui.section('Repository Management')
+      ui.section("Repository Management")
 
       repos_needed.each do |component|
         repo_info = Config.repository_for(component)
@@ -130,7 +136,8 @@ module ClaudeAgents
       if success
         ui.success("Successfully cloned #{repo_url}")
       else
-        raise RepositoryError, "Failed to clone repository: #{repo_url}. Please check your GitHub CLI setup."
+        raise RepositoryError,
+              "Failed to clone repository: #{repo_url}. Please check your GitHub CLI setup."
       end
     end
 
@@ -138,7 +145,7 @@ module ClaudeAgents
       spinner = ui.spinner("Updating #{repo_name}...")
       spinner.auto_spin
 
-      success = system('git', 'pull', chdir: repo_path, out: File::NULL, err: File::NULL)
+      success = system("git", "pull", chdir: repo_path, out: File::NULL, err: File::NULL)
       spinner.stop
 
       if success
@@ -150,12 +157,12 @@ module ClaudeAgents
 
     # Component installation methods
     def install_dlabs_agents
-      ui.subsection('Setting up dLabs agents')
+      ui.subsection("Setting up dLabs agents")
 
       file_mappings = file_processor.get_file_mappings_for_component(:dlabs)
 
       if file_mappings.empty?
-        ui.warn('No dLabs agent files found to install')
+        ui.warn("No dLabs agent files found to install")
         return { total_files: 0, created_links: 0, skipped_files: 0 }
       end
 
@@ -163,7 +170,7 @@ module ClaudeAgents
     end
 
     def install_wshobson_agents
-      ui.subsection('Setting up wshobson agents')
+      ui.subsection("Setting up wshobson agents")
 
       # Ensure repository exists
       source_dir = Config.source_dir_for(:wshobson_agents)
@@ -175,7 +182,7 @@ module ClaudeAgents
       file_mappings = file_processor.get_file_mappings_for_component(:wshobson_agents)
 
       if file_mappings.empty?
-        ui.warn('No wshobson agent files found to install')
+        ui.warn("No wshobson agent files found to install")
         return { total_files: 0, created_links: 0, skipped_files: 0 }
       end
 
@@ -183,7 +190,7 @@ module ClaudeAgents
     end
 
     def install_wshobson_commands
-      ui.subsection('Setting up wshobson commands')
+      ui.subsection("Setting up wshobson commands")
 
       # Ensure repository exists
       source_dir = Config.source_dir_for(:wshobson_commands)
@@ -199,7 +206,7 @@ module ClaudeAgents
       file_mappings = file_processor.get_file_mappings_for_component(:wshobson_commands)
 
       if file_mappings.empty?
-        ui.warn('No wshobson command files found to install')
+        ui.warn("No wshobson command files found to install")
         return { total_files: 0, created_links: 0, skipped_files: 0 }
       end
 
@@ -207,7 +214,7 @@ module ClaudeAgents
     end
 
     def install_awesome_agents
-      ui.subsection('Setting up awesome-claude-code-subagents')
+      ui.subsection("Setting up awesome-claude-code-subagents")
 
       # Ensure repository exists
       source_dir = Config.source_dir_for(:awesome)
@@ -219,7 +226,7 @@ module ClaudeAgents
       file_mappings = file_processor.get_file_mappings_for_component(:awesome)
 
       if file_mappings.empty?
-        ui.warn('No awesome agent files found to install')
+        ui.warn("No awesome agent files found to install")
         return { total_files: 0, created_links: 0, skipped_files: 0 }
       end
 
@@ -232,10 +239,10 @@ module ClaudeAgents
 
       return if installed_components.empty?
 
-      ui.warn('Existing agent installations detected.')
+      ui.warn("Existing agent installations detected.")
       ui.newline
 
-      return unless ui.confirm('Would you like to remove existing installations first?')
+      return unless ui.confirm("Would you like to remove existing installations first?")
 
       components_to_remove = ui.removal_confirmation_menu
 

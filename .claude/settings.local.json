@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(./bin/claude-agents:*)",
+      "Bash(DEBUG_TESTS=1 bundle exec ruby -I lib -I test test/integration/cli_commands_test.rb -n test_install_command_with_component_option)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

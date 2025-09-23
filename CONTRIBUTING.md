@@ -39,7 +39,8 @@ For issues with external collections, please contribute directly to their reposi
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed
 - [GitHub CLI](https://cli.github.com/) for repository management
 - Git for version control
-- Bash shell environment
+- Ruby 3.0+ for the Ruby CLI and testing
+- Bundler for dependency management
 
 ### Development Setup
 
@@ -51,13 +52,19 @@ For issues with external collections, please contribute directly to their reposi
    cd claude-agents
    ```
 
-3. Run the installation to understand the current structure:
+3. Install Ruby dependencies:
 
    ```bash
-   ./install.sh
+   bundle install
    ```
 
-4. Create a feature branch:
+4. Run the installation to understand the current structure:
+
+   ```bash
+   ./bin/claude-agents install
+   ```
+
+5. Create a feature branch:
 
    ```bash
    git checkout -b feature/your-feature-name
@@ -115,11 +122,11 @@ When invoked:
 
 ### Testing New Agents
 
-1. Create agent in `dallasLabs/` directory
-2. Run setup script:
+1. Create agent in `agents/dallasLabs/` directory
+2. Run setup using Ruby CLI:
 
    ```bash
-   ./setup_agents.sh
+   ./bin/claude-agents setup dlabs
    ```
 
 3. Test in Claude Code:
@@ -130,6 +137,20 @@ When invoked:
 
    # Test agent invocation in Claude Code
    @dLabs-your-agent-name "test prompt"
+   ```
+
+4. Run the test suite to ensure everything works:
+
+   ```bash
+   # Run all tests
+   rake test
+
+   # Run specific test suites
+   rake test:unit
+   rake test:integration
+
+   # Run with custom test runner
+   bin/test --verbose
    ```
 
 ### Quality Standards
@@ -152,21 +173,71 @@ When invoked:
 
 ### Testing Scripts
 
-Test setup scripts in clean environments:
+#### Ruby CLI Testing (Recommended)
+
+Use the comprehensive test suite for development:
+
+```bash
+# Run all tests (91+ tests)
+rake test
+
+# Run specific test categories
+rake test:unit                              # Unit tests (70+ tests)
+rake test:integration                       # Integration tests (21+ tests)
+rake test:performance                       # Performance-focused tests
+
+# Run with specific options
+rake test:fast_fail                         # Stop on first failure
+rake test:failures_only                     # Show only failures
+rake test:watch                             # Continuous testing
+
+# Use custom test runner
+bin/test                                    # All tests
+bin/test --suite unit                       # Specific suite
+bin/test --verbose --parallel               # With options
+```
+
+#### Manual Testing in Clean Environment
+
+For manual verification:
+
+```bash
+# Remove existing symlinks for testing
+./bin/claude-agents remove dlabs
+./bin/claude-agents remove wshobson-agents
+./bin/claude-agents remove wshobson-commands
+./bin/claude-agents remove awesome
+
+# Test individual components
+./bin/claude-agents setup dlabs
+./bin/claude-agents setup wshobson-agents
+./bin/claude-agents setup wshobson-commands
+./bin/claude-agents setup awesome
+
+# Test complete installation
+./bin/claude-agents install
+
+# Check system health
+./bin/claude-agents doctor
+```
+
+#### Legacy Script Testing (Deprecated)
+
+For backward compatibility testing:
 
 ```bash
 # Remove existing symlinks for testing
 rm -rf ~/.claude/agents/dLabs-*
 rm -rf ~/.claude/commands/wshobson-*
 
-# Test individual scripts
-./setup_agents.sh
-./setup_wshobson_agents_symlinks.sh
-./setup_wshobson_commands_symlinks.sh
-./setup_awesome_agents_symlinks.sh
+# Test individual legacy scripts (deprecated)
+./bin/setup_agents.sh
+./bin/setup_wshobson_agents_symlinks.sh
+./bin/setup_wshobson_commands_symlinks.sh
+./bin/setup_awesome_agents_symlinks.sh
 
-# Test complete installation
-./install.sh
+# Test legacy installer (deprecated)
+./bin/install.sh
 ```
 
 ## Documentation Updates
@@ -294,14 +365,55 @@ Include context about how you discovered the issue through this collection syste
 - Keep commits focused and atomic
 - Rebase feature branches before submitting PRs
 
+## Testing Requirements
+
+### Test-Driven Development
+
+This project follows TDD principles:
+
+- **Write tests first**: All new functionality requires tests before implementation
+- **Real data only**: No mocking - tests use actual file operations and CLI execution
+- **Comprehensive coverage**: Unit tests, integration tests, and performance tests required
+- **Performance thresholds**: Critical operations must complete under 1s, memory usage under 50MB
+
+### Testing Standards
+
+Before contributing code changes:
+
+```bash
+# All tests must pass
+rake test
+
+# Code quality checks
+bundle exec rubocop
+
+# Performance verification
+rake test:performance
+
+# Manual CLI testing
+./bin/claude-agents doctor
+```
+
+### Test Documentation
+
+For detailed testing information, see [TESTING.md](TESTING.md). The testing guide includes:
+
+- 91+ comprehensive tests across all functionality
+- Test helpers and utilities for file operations, CLI testing, and performance monitoring
+- Custom test runners and reporters
+- Continuous testing workflows
+
 ## Pull Request Process
 
 1. **Pre-submission Checklist:**
+   - [ ] All tests pass (`rake test`)
+   - [ ] Code quality checks pass (`bundle exec rubocop`)
    - [ ] All scripts execute without errors
    - [ ] Documentation updated if needed
    - [ ] CHANGELOG.md updated for significant changes
    - [ ] New agents tested in Claude Code
    - [ ] Code follows project style guidelines
+   - [ ] Performance tests pass for any optimizations
 
 2. **PR Description:**
    - Clear description of changes

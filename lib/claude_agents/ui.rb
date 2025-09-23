@@ -62,21 +62,21 @@ module ClaudeAgents
 
     # Interactive prompts
     def confirm(message, default: false)
-      prompt.yes?(pastel.cyan("#{message}"), default: default)
+      prompt.yes?(pastel.cyan(message.to_s), default: default)
     rescue TTY::Reader::InputInterrupt
-      raise UserCancelledError, 'User cancelled operation'
+      raise UserCancelledError, "User cancelled operation"
     end
 
     def select(message, choices)
       prompt.select(pastel.cyan(message), choices)
     rescue TTY::Reader::InputInterrupt
-      raise UserCancelledError, 'User cancelled operation'
+      raise UserCancelledError, "User cancelled operation"
     end
 
     def multiselect(message, choices)
       prompt.multi_select(pastel.cyan(message), choices)
     rescue TTY::Reader::InputInterrupt
-      raise UserCancelledError, 'User cancelled operation'
+      raise UserCancelledError, "User cancelled operation"
     end
 
     # Headers and titles
@@ -132,16 +132,18 @@ module ClaudeAgents
       choices = []
 
       Config::COMPONENTS.each do |key, info|
-        status = component_installed?(key) ? pastel.green('[INSTALLED]') : pastel.dim('[NOT INSTALLED]')
+        status = component_installed?(key) ? pastel.green("[INSTALLED]") : pastel.dim("[NOT INSTALLED]")
         choice_text = "#{info[:name]} - #{info[:description]} #{status}"
         choices << { name: choice_text, value: key }
       end
 
-      multiselect('Select components to install:', choices)
+      multiselect("Select components to install:", choices)
     end
 
     def removal_confirmation_menu
-      installed_components = Config.all_components.select { |component| component_installed?(component) }
+      installed_components = Config.all_components.select do |component|
+        component_installed?(component)
+      end
 
       return [] if installed_components.empty?
 
@@ -150,22 +152,22 @@ module ClaudeAgents
         { name: "#{info[:name]} - #{info[:description]}", value: component }
       end
 
-      multiselect('Select components to remove:', choices)
+      multiselect("Select components to remove:", choices)
     end
 
     # Status checking
     def component_installed?(component)
       case component
       when :dlabs
-        Dir.glob(File.join(Config.agents_dir, 'dLabs-*')).any?
+        Dir.glob(File.join(Config.agents_dir, "dLabs-*")).any?
       when :wshobson_agents
-        Dir.glob(File.join(Config.agents_dir, 'wshobson-*')).any?
+        Dir.glob(File.join(Config.agents_dir, "wshobson-*")).any?
       when :wshobson_commands
         Dir.exist?(Config.tools_dir) || Dir.exist?(Config.workflows_dir)
       when :awesome
         # Check for category-prefixed files (not dLabs- or wshobson-)
-        Dir.glob(File.join(Config.agents_dir, '*-*'))
-           .reject { |path| File.basename(path).start_with?('dLabs-', 'wshobson-') }
+        Dir.glob(File.join(Config.agents_dir, "*-*"))
+           .reject { |path| File.basename(path).start_with?("dLabs-", "wshobson-") }
            .any?
       else
         false
@@ -174,16 +176,16 @@ module ClaudeAgents
 
     def display_installation_summary(results)
       newline
-      section('Installation Summary')
+      section("Installation Summary")
 
       summary_data = [
-        ['Component', 'Status', 'Files Processed', 'Links Created', 'Skipped'],
+        ["Component", "Status", "Files Processed", "Links Created", "Skipped"],
         :separator
       ]
 
       results.each do |component, result|
         info = Config.component_info(component)
-        status = result[:success] ? pastel.green('✅ Success') : pastel.red('❌ Failed')
+        status = result[:success] ? pastel.green("✅ Success") : pastel.red("❌ Failed")
 
         summary_data << [
           info[:name],
@@ -199,16 +201,16 @@ module ClaudeAgents
 
     def display_removal_summary(results)
       newline
-      section('Removal Summary')
+      section("Removal Summary")
 
       summary_data = [
-        ['Component', 'Status', 'Files Removed', 'Errors'],
+        ["Component", "Status", "Files Removed", "Errors"],
         :separator
       ]
 
       results.each do |component, result|
         info = Config.component_info(component)
-        status = result[:success] ? pastel.green('✅ Success') : pastel.red('❌ Failed')
+        status = result[:success] ? pastel.green("✅ Success") : pastel.red("❌ Failed")
 
         summary_data << [
           info[:name],
@@ -222,36 +224,39 @@ module ClaudeAgents
     end
 
     def display_status
-      title('Claude Agents Status')
+      title("Claude Agents Status")
 
       status_data = [
-        ['Component', 'Status', 'Installed Files'],
+        ["Component", "Status", "Installed Files"],
         :separator
       ]
 
       Config.all_components.each do |component|
         info = Config.component_info(component)
         installed = component_installed?(component)
-        status = installed ? pastel.green('✅ Installed') : pastel.dim('⭕ Not Installed')
+        status = installed ? pastel.green("✅ Installed") : pastel.dim("⭕ Not Installed")
 
         file_count = if installed
-          case component
-          when :dlabs
-            Dir.glob(File.join(Config.agents_dir, 'dLabs-*')).length
-          when :wshobson_agents
-            Dir.glob(File.join(Config.agents_dir, 'wshobson-*')).length
-          when :wshobson_commands
-            Dir.glob(File.join(Config.commands_dir, '**/*')).length
-          when :awesome
-            Dir.glob(File.join(Config.agents_dir, '*-*'))
-               .reject { |path| File.basename(path).start_with?('dLabs-', 'wshobson-') }
-               .length
-          else
-            0
-          end
-        else
-          0
-        end
+                       case component
+                       when :dlabs
+                         Dir.glob(File.join(Config.agents_dir, "dLabs-*")).length
+                       when :wshobson_agents
+                         Dir.glob(File.join(Config.agents_dir, "wshobson-*")).length
+                       when :wshobson_commands
+                         Dir.glob(File.join(Config.commands_dir, "**/*")).length
+                       when :awesome
+                         Dir.glob(File.join(Config.agents_dir, "*-*"))
+                            .reject do |path|
+                           File.basename(path).start_with?("dLabs-",
+                                                           "wshobson-")
+                         end
+                            .length
+                       else
+                         0
+                       end
+                     else
+                       0
+                     end
 
         status_data << [info[:name], status, file_count.to_s]
       end

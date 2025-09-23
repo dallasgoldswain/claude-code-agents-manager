@@ -14,10 +14,10 @@ module ClaudeAgents
     end
 
     # Class-level configuration
-    class_option :verbose, type: :boolean, aliases: '-v', desc: 'Enable verbose output'
-    class_option :no_color, type: :boolean, desc: 'Disable colored output'
+    class_option :verbose, type: :boolean, aliases: "-v", desc: "Enable verbose output"
+    class_option :no_color, type: :boolean, desc: "Disable colored output"
 
-    desc 'install', 'Interactive installation of Claude Code agents'
+    desc "install", "Interactive installation of Claude Code agents"
     long_desc <<~DESC
       Launch an interactive installer that allows you to select which agent collections
       to install. The installer will:
@@ -33,9 +33,9 @@ module ClaudeAgents
       • wshobson commands - Workflow tools (56 commands)
       • awesome-claude-code-subagents - Industry-standard agents (116 agents)
     DESC
-    option :component, type: :string, aliases: '-c',
-           desc: 'Install specific component (dlabs, wshobson-agents, wshobson-commands, awesome)'
-    option :yes, type: :boolean, aliases: '-y', desc: 'Skip interactive prompts and install all'
+    option :component, type: :string, aliases: "-c",
+                       desc: "Install specific component (dlabs, wshobson-agents, wshobson-commands, awesome)"
+    option :yes, type: :boolean, aliases: "-y", desc: "Skip interactive prompts and install all"
 
     def install
       configure_ui
@@ -53,7 +53,8 @@ module ClaudeAgents
       ErrorHandler.handle_error(e, @ui)
     end
 
-    desc 'setup COMPONENT', 'Setup specific component (dlabs, wshobson-agents, wshobson-commands, awesome)'
+    desc "setup COMPONENT",
+         "Setup specific component (dlabs, wshobson-agents, wshobson-commands, awesome)"
     long_desc <<~DESC
       Setup a specific component without interactive prompts.
 
@@ -75,7 +76,7 @@ module ClaudeAgents
       result = installer.install_component(component)
 
       @ui.newline
-      if result[:created_links] > 0
+      if result[:created_links].positive?
         @ui.success("Successfully installed #{result[:created_links]} #{component} agents")
       else
         @ui.warn("No new #{component} agents were installed")
@@ -84,7 +85,7 @@ module ClaudeAgents
       ErrorHandler.handle_error(e, @ui)
     end
 
-    desc 'remove [COMPONENT]', 'Remove installed agents'
+    desc "remove [COMPONENT]", "Remove installed agents"
     long_desc <<~DESC
       Remove installed Claude Code agents. If no component is specified,
       launches an interactive removal tool.
@@ -101,7 +102,7 @@ module ClaudeAgents
       • Cleans up empty directories
       • Provides detailed feedback on what was removed
     DESC
-    option :force, type: :boolean, aliases: '-f', desc: 'Skip confirmation prompts'
+    option :force, type: :boolean, aliases: "-f", desc: "Skip confirmation prompts"
 
     def remove(component = nil)
       configure_ui
@@ -109,14 +110,14 @@ module ClaudeAgents
 
       if component.nil?
         remover.interactive_remove
-      elsif component == 'all'
+      elsif component == "all"
         remover.remove_all
       else
         validate_component!(component)
         result = remover.remove_component(component)
 
         @ui.newline
-        if result[:removed_count] > 0
+        if result[:removed_count].positive?
           @ui.success("Successfully removed #{result[:removed_count]} #{component} agents")
         else
           @ui.info("No #{component} agents were found to remove")
@@ -126,7 +127,7 @@ module ClaudeAgents
       ErrorHandler.handle_error(e, @ui)
     end
 
-    desc 'status', 'Show installation status of all components'
+    desc "status", "Show installation status of all components"
     long_desc <<~DESC
       Display a comprehensive status report showing:
       • Which components are currently installed
@@ -146,21 +147,21 @@ module ClaudeAgents
       ErrorHandler.handle_error(e, @ui)
     end
 
-    desc 'version', 'Show version information'
+    desc "version", "Show version information"
     def version
       puts "Claude Agents CLI v#{ClaudeAgents::VERSION}"
-      puts 'A comprehensive management system for Claude Code agent collections'
+      puts "A comprehensive management system for Claude Code agent collections"
       puts
-      puts 'Components:'
-      puts '• dLabs agents - Local specialized agents'
-      puts '• wshobson agents - Production-ready development agents'
-      puts '• wshobson commands - Multi-agent workflow tools'
-      puts '• awesome-claude-code-subagents - Industry-standard agent collection'
+      puts "Components:"
+      puts "• dLabs agents - Local specialized agents"
+      puts "• wshobson agents - Production-ready development agents"
+      puts "• wshobson commands - Multi-agent workflow tools"
+      puts "• awesome-claude-code-subagents - Industry-standard agent collection"
       puts
-      puts 'GitHub: https://github.com/dallasgoldswain/claude-code-agents-manager'
+      puts "GitHub: https://github.com/dallasgoldswain/claude-code-agents-manager"
     end
 
-    desc 'doctor', 'Check system health and dependencies'
+    desc "doctor", "Check system health and dependencies"
     long_desc <<~DESC
       Run system diagnostics to check:
       • GitHub CLI availability and authentication
@@ -173,7 +174,7 @@ module ClaudeAgents
 
     def doctor
       configure_ui
-      @ui.title('Claude Agents System Doctor')
+      @ui.title("Claude Agents System Doctor")
 
       checks = [
         -> { check_github_cli },
@@ -185,19 +186,17 @@ module ClaudeAgents
       all_passed = true
 
       checks.each do |check|
-        begin
-          check.call
-        rescue StandardError => e
-          @ui.error("Check failed: #{e.message}")
-          all_passed = false
-        end
+        check.call
+      rescue StandardError => e
+        @ui.error("Check failed: #{e.message}")
+        all_passed = false
       end
 
       @ui.newline
       if all_passed
-        @ui.success('All system checks passed! 🎉')
+        @ui.success("All system checks passed! 🎉")
       else
-        @ui.error('Some system checks failed. Please review the output above.')
+        @ui.error("Some system checks failed. Please review the output above.")
         exit 1
       end
     rescue StandardError => e
@@ -208,38 +207,38 @@ module ClaudeAgents
 
     def configure_ui
       # Configure UI based on options
-      if options[:no_color]
-        @ui.pastel.enabled = false
-      end
+      return unless options[:no_color]
+
+      @ui.pastel.enabled = false
     end
 
     def validate_component!(component)
-      unless Config.valid_component?(component)
-        available = Config.all_components.join(', ')
-        raise ValidationError, "Invalid component: #{component}. Available: #{available}"
-      end
+      return if Config.valid_component?(component)
+
+      available = Config.all_components.join(", ")
+      raise ValidationError, "Invalid component: #{component}. Available: #{available}"
     end
 
     # System health checks
     def check_github_cli
-      @ui.subsection('Checking GitHub CLI')
+      @ui.subsection("Checking GitHub CLI")
 
-      if system('which gh > /dev/null 2>&1')
-        @ui.success('GitHub CLI is installed')
+      if system("which gh > /dev/null 2>&1")
+        @ui.success("GitHub CLI is installed")
 
-        if system('gh auth status > /dev/null 2>&1')
-          @ui.success('GitHub CLI is authenticated')
+        if system("gh auth status > /dev/null 2>&1")
+          @ui.success("GitHub CLI is authenticated")
         else
           @ui.warn('GitHub CLI is not authenticated. Run "gh auth login" to authenticate.')
         end
       else
-        @ui.error('GitHub CLI is not installed. Please install it from https://cli.github.com/')
-        raise ValidationError, 'GitHub CLI is required for repository management'
+        @ui.error("GitHub CLI is not installed. Please install it from https://cli.github.com/")
+        raise ValidationError, "GitHub CLI is required for repository management"
       end
     end
 
     def check_directories
-      @ui.subsection('Checking directories')
+      @ui.subsection("Checking directories")
 
       directories = [
         Config.claude_dir,
@@ -262,22 +261,20 @@ module ClaudeAgents
     end
 
     def check_symlinks
-      @ui.subsection('Checking symlinks')
+      @ui.subsection("Checking symlinks")
 
       broken_symlinks = []
 
       [Config.agents_dir, Config.commands_dir].each do |dir|
         next unless Dir.exist?(dir)
 
-        Dir.glob(File.join(dir, '**/*')).each do |path|
-          if File.symlink?(path) && !File.exist?(path)
-            broken_symlinks << path
-          end
+        Dir.glob(File.join(dir, "**/*")).each do |path|
+          broken_symlinks << path if File.symlink?(path) && !File.exist?(path)
         end
       end
 
       if broken_symlinks.empty?
-        @ui.success('All symlinks are healthy')
+        @ui.success("All symlinks are healthy")
       else
         @ui.warn("Found #{broken_symlinks.length} broken symlinks:")
         broken_symlinks.each { |link| @ui.dim("  • #{link}") }
@@ -285,13 +282,13 @@ module ClaudeAgents
     end
 
     def check_repositories
-      @ui.subsection('Checking repositories')
+      @ui.subsection("Checking repositories")
 
-      Config::REPOSITORIES.each do |key, repo_info|
+      Config::REPOSITORIES.each_value do |repo_info|
         repo_path = File.join(Config.project_root, repo_info[:dir])
 
         if Dir.exist?(repo_path)
-          if Dir.exist?(File.join(repo_path, '.git'))
+          if Dir.exist?(File.join(repo_path, ".git"))
             @ui.success("#{repo_info[:dir]} repository is available")
           else
             @ui.warn("#{repo_info[:dir]} directory exists but is not a git repository")
@@ -302,11 +299,11 @@ module ClaudeAgents
       end
 
       # Check dLabs directory
-      dlabs_path = File.join(Config.project_root, 'agents', 'dallasLabs')
+      dlabs_path = File.join(Config.project_root, "agents", "dallasLabs")
       if Dir.exist?(dlabs_path)
-        @ui.success('dallasLabs directory is available')
+        @ui.success("dallasLabs directory is available")
       else
-        @ui.error('dallasLabs directory not found')
+        @ui.error("dallasLabs directory not found")
       end
     end
   end
