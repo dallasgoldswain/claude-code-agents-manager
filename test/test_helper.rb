@@ -329,3 +329,12 @@ class IntegrationTest < Minitest::Test
     ClaudeAgents::Config.reset_cache!
   end
 end
+
+# Global cleanup of mocked methods at test suite completion
+Minitest.after_run do
+  # Restore system method if it was mocked
+  if defined?(CLIHelpers) && CLIHelpers.instance_methods.include?(:restore_system_command)
+    test_instance = Object.new.extend(CLIHelpers)
+    test_instance.restore_system_command
+  end
+end
