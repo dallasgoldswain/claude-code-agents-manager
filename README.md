@@ -235,6 +235,11 @@ rake test:method[TestClass,test_method]     # Run specific test method
 
 # Test reporting
 rake test:report                            # Generate detailed test report
+
+# Custom test runner
+bin/test                                    # Run all tests with custom runner
+bin/test --suite unit                       # Run specific test suite
+bin/test --verbose --parallel               # Run with options
 ```
 
 #### Code Quality Tasks
@@ -302,31 +307,36 @@ lib/
 
 ### Testing Architecture
 
-The project implements a comprehensive testing strategy:
+The project implements a comprehensive testing strategy with **91+ tests** covering all functionality:
 
 ```
 test/
-├── test_helper.rb                          # Test configuration and setup
-├── minitest.rb                             # Minitest configuration
-├── unit/                                   # Unit tests for individual components
-│   ├── config_test.rb
-│   ├── file_processor_test.rb
-│   ├── symlink_manager_test.rb
-│   └── error_handling_test.rb
-├── integration/                            # Integration tests for CLI commands
-│   └── cli_commands_test.rb
-└── support/                                # Test utilities and helpers
-    ├── cli_helpers.rb
-    ├── filesystem_helpers.rb
-    └── test_fixtures.rb
+├── test_helper.rb                          # Central configuration and base classes
+├── .minitest.rb                            # Minitest configuration
+├── unit/                                   # Service class tests (70+ tests)
+│   ├── config_test.rb                      # Configuration management (25 tests)
+│   ├── symlink_manager_test.rb             # Symlink operations (19 tests)
+│   ├── file_processor_test.rb              # File processing (14 tests)
+│   └── error_handling_test.rb              # Error scenarios (13 tests)
+├── integration/                            # End-to-end tests (21+ tests)
+│   └── cli_commands_test.rb                # Complete CLI workflows
+└── support/                                # Reusable test utilities
+    ├── filesystem_helpers.rb               # File operations and assertions
+    ├── cli_helpers.rb                      # CLI command testing utilities
+    └── test_fixtures.rb                    # Test data generation and fixtures
 ```
 
 **Testing Features:**
-- **Minitest-based**: Using Ruby's built-in testing framework
-- **Isolated environments**: Each test uses temporary directories
-- **CLI testing**: Full command-line interface testing with real file operations
-- **Performance monitoring**: Execution time tracking and benchmarking
-- **Coverage reporting**: Optional test coverage analysis
+- **91+ comprehensive tests**: Unit, integration, and performance tests
+- **TDD approach**: Tests written before implementation
+- **Real data operations**: No mocking - uses actual file operations
+- **Performance benchmarks**: Critical operations under 1s execution time
+- **Memory monitoring**: Large operations under 50MB growth
+- **Environment isolation**: Each test uses isolated temporary directories
+- **Minitest framework**: Ruby's built-in testing with custom reporters
+- **Continuous testing**: Watch mode and parallel execution support
+
+For detailed testing information, see [TESTING.md](TESTING.md)
 
 ## Updating Collections
 
