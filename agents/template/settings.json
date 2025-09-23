@@ -1,0 +1,58 @@
+{
+  "permissions": {
+    "allow": [ ],
+    "ask": [ ],
+    "deny": [ ]
+  },
+  "model": "sonnet",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [ ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [ ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [ ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [ ]
+      }
+    ],
+    "Stop": [
+      {
+        {
+          "matcher": "*",
+          "hooks": [ ]
+        }
+      }
+    ],
+    "Notification": [
+      {
+        {
+          "matcher": "*",
+          "hooks": [ ]
+        }
+      ]
+    },
+    "outputStyle": "Explanatory",
+    "statusLine": {
+      "type": "command",
+      "command": "input=$(cat); model=$(echo \"$input\" | jq -r '.model.display_name'); workspace=$(echo \"$input\" | jq -r '.workspace.current_dir' | sed 's|.*/||'); output_style=$(echo \"$input\" | jq -r '.output_style.name'); printf '\\e[48;2;49;50;68;38;2;205;214;244m  %s \\e[48;2;250;179;135;38;2;49;50;68m\\e[38;2;24;24;37m  %s \\e[48;2;166;227;161;38;2;250;179;135m\\e[38;2;24;24;37m 󰲋 %s \\e[48;2;203;166;247;38;2;166;227;161m\\e[38;2;24;24;37m  %s \\e[0m\\e[38;2;203;166;247m\\e[0m' \"$model\" \"$output_style\" \"$workspace\" \"$(date +%H:%M)\""
+    },
+    "feedbackSurveyState": {
+      "lastShownTime": 1754360713440
+    }
+  }
+  
