@@ -7,7 +7,16 @@ module ClaudeAgents
 
     def initialize(*args)
       super
-      @ui = UI.new
+      # Fully qualify UI to ensure proper constant resolution after test cache clearing
+      unless defined?(ClaudeAgents::UI)
+        begin
+          require "claude_agents/ui"
+        rescue LoadError
+          # Fallback: raise a clearer error
+          raise "ClaudeAgents::UI could not be loaded during CLI initialization"
+        end
+      end
+      @ui = ClaudeAgents::UI.new
     rescue StandardError => e
       puts "Initialization error: #{e.message}"
       exit 1
@@ -19,22 +28,17 @@ module ClaudeAgents
 
     desc "install", "Interactive installation of Claude Code agents"
     long_desc <<~DESC
-      Launch an interactive installer that allows you to select which agent collections
-      to install. The installer will:
+      Launch an interactive installer for the dLabs agent collection.
 
+      The installer will:
       • Show you what's currently installed
-      • Let you choose which components to install
-      • Handle repository cloning and updates automatically
-      • Create organized symlinks in ~/.claude/
+      • Create organized symlinks in ~/.claude/agents
 
       Components available:
-      • dLabs agents - Local specialized agents (5 agents)
-      • wshobson agents - Production-ready agents (82 agents)
-      • wshobson commands - Workflow tools (56 commands)
-      • awesome-claude-code-subagents - Industry-standard agents (116 agents)
+      • dLabs agents - Local specialized agents
     DESC
     option :component, type: :string, aliases: "-c",
-                       desc: "Install specific component (dlabs, wshobson-agents, wshobson-commands, awesome)"
+                       desc: "Install specific component (dlabs)"
     option :yes, type: :boolean, aliases: "-y", desc: "Skip interactive prompts and install all"
 
     def install
@@ -54,18 +58,15 @@ module ClaudeAgents
     end
 
     desc "setup COMPONENT",
-         "Setup specific component (dlabs, wshobson-agents, wshobson-commands, awesome)"
+         "Setup specific component (dlabs)"
     long_desc <<~DESC
-      Setup a specific component without interactive prompts.
+          Setup a specific component without interactive prompts.
 
       Available components:
       • dlabs - dLabs agents (local specialized agents)
-      • wshobson-agents - wshobson production-ready agents
-      • wshobson-commands - wshobson workflow tools and commands
-      • awesome - awesome-claude-code-subagents collection
 
-      This command will create symlinks for the specified component only.
-      Use 'install' for full interactive setup including repository management.
+          This command will create symlinks for the specified component only.
+          Use 'install' for full interactive setup including repository management.
     DESC
 
     def setup(component)
@@ -87,15 +88,11 @@ module ClaudeAgents
 
     desc "remove [COMPONENT]", "Remove installed agents"
     long_desc <<~DESC
-      Remove installed Claude Code agents. If no component is specified,
-      launches an interactive removal tool.
+      Remove installed dLabs agents. If no component is specified, launches an interactive removal tool.
 
       Available components:
       • dlabs - Remove dLabs agents
-      • wshobson-agents - Remove wshobson agents
-      • wshobson-commands - Remove wshobson commands
-      • awesome - Remove awesome-claude-code-subagents
-      • all - Remove everything (use with caution!)
+      • all - Alias for dlabs (kept for backward compatibility)
 
       The removal process:
       • Only removes symlinks (source files are preserved)
@@ -154,9 +151,6 @@ module ClaudeAgents
       puts
       puts "Components:"
       puts "• dLabs agents - Local specialized agents"
-      puts "• wshobson agents - Production-ready development agents"
-      puts "• wshobson commands - Multi-agent workflow tools"
-      puts "• awesome-claude-code-subagents - Industry-standard agent collection"
       puts
       puts "GitHub: https://github.com/dallasgoldswain/claude-code-agents-manager"
     end
@@ -175,30 +169,9 @@ module ClaudeAgents
     def doctor
       configure_ui
       @ui.title("Claude Agents System Doctor")
+      all_passed = run_doctor_checks
 
-      checks = [
-        -> { check_github_cli },
-        -> { check_directories },
-        -> { check_symlinks },
-        -> { check_repositories }
-      ]
-
-      all_passed = true
-
-      checks.each do |check|
-        check.call
-      rescue StandardError => e
-        @ui.error("Check failed: #{e.message}")
-        all_passed = false
-      end
-
-      @ui.newline
-      if all_passed
-        @ui.success("All system checks passed! 🎉")
-      else
-        @ui.error("Some system checks failed. Please review the output above.")
-        exit 1
-      end
+      summarize_doctor(all_passed)
     rescue StandardError => e
       ErrorHandler.handle_error(e, @ui)
     end
@@ -215,17 +188,52 @@ module ClaudeAgents
     def validate_component!(component)
       return if Config.valid_component?(component)
 
-      available = Config.all_components.join(", ")
-      raise ValidationError, "Invalid component: #{component}. Available: #{available}"
+      # Support legacy 'all' alias mapping to dlabs
+      component = "dlabs" if component == "all"
+      available = (Config.all_components + [:all]).join(", ")
+      return if Config.valid_component?(component)
+
+      raise ValidationError,
+            "Invalid component: #{component}. Available: #{available}"
     end
 
     # System health checks
+    # Doctor helpers extracted to reduce method complexity
+    def run_doctor_checks
+      checks = doctor_checks
+      all_passed = true
+      checks.each do |label, check|
+        check.call
+      rescue StandardError => e
+        @ui.error("#{label} failed: #{e.message}")
+        all_passed = false
+      end
+      all_passed
+    end
+
+    def doctor_checks
+      {
+        "GitHub CLI" => proc { check_github_cli },
+        "Directories" => proc { check_directories },
+        "Symlinks" => proc { check_symlinks },
+        "Repositories" => proc { check_repositories }
+      }
+    end
+
+    def summarize_doctor(all_passed)
+      @ui.newline
+      if all_passed
+        @ui.success("All system checks passed! 🎉")
+      else
+        @ui.error("Some system checks failed. Please review the output above.")
+        exit 1
+      end
+    end
+
     def check_github_cli
       @ui.subsection("Checking GitHub CLI")
-
       if system("which gh > /dev/null 2>&1")
         @ui.success("GitHub CLI is installed")
-
         if system("gh auth status > /dev/null 2>&1")
           @ui.success("GitHub CLI is authenticated")
         else
@@ -239,14 +247,7 @@ module ClaudeAgents
 
     def check_directories
       @ui.subsection("Checking directories")
-
-      directories = [
-        Config.claude_dir,
-        Config.agents_dir,
-        Config.commands_dir
-      ]
-
-      directories.each do |dir|
+      [Config.claude_dir, Config.agents_dir, Config.commands_dir].each do |dir|
         if Dir.exist?(dir)
           if File.writable?(dir)
             @ui.success("#{dir} exists and is writable")
@@ -262,9 +263,7 @@ module ClaudeAgents
 
     def check_symlinks
       @ui.subsection("Checking symlinks")
-
       broken_symlinks = []
-
       [Config.agents_dir, Config.commands_dir].each do |dir|
         next unless Dir.exist?(dir)
 
@@ -272,7 +271,6 @@ module ClaudeAgents
           broken_symlinks << path if File.symlink?(path) && !File.exist?(path)
         end
       end
-
       if broken_symlinks.empty?
         @ui.success("All symlinks are healthy")
       else
@@ -283,10 +281,8 @@ module ClaudeAgents
 
     def check_repositories
       @ui.subsection("Checking repositories")
-
       Config::REPOSITORIES.each_value do |repo_info|
         repo_path = File.join(Config.project_root, repo_info[:dir])
-
         if Dir.exist?(repo_path)
           if Dir.exist?(File.join(repo_path, ".git"))
             @ui.success("#{repo_info[:dir]} repository is available")
@@ -297,8 +293,6 @@ module ClaudeAgents
           @ui.info("#{repo_info[:dir]} repository not cloned")
         end
       end
-
-      # Check dLabs directory
       dlabs_path = File.join(Config.project_root, "agents", "dallasLabs")
       if Dir.exist?(dlabs_path)
         @ui.success("dallasLabs directory is available")

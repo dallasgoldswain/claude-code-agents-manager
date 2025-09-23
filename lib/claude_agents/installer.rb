@@ -54,19 +54,7 @@ module ClaudeAgents
         raise InstallationError, e.message
       end
 
-      case component.to_sym
-      when :dlabs
-        install_dlabs_agents
-      when :wshobson_agents
-        install_wshobson_agents
-      when :wshobson_commands
-        install_wshobson_commands
-      when :awesome
-        install_awesome_agents
-      else
-        # Should not be reached because component_info validated the component.
-        raise InstallationError, "Handler not implemented for component: #{component}"
-      end
+      install_dlabs_agents
     end
 
     # Install multiple components with summary
@@ -169,69 +157,7 @@ module ClaudeAgents
       symlink_manager.create_symlinks(file_mappings)
     end
 
-    def install_wshobson_agents
-      ui.subsection("Setting up wshobson agents")
-
-      # Ensure repository exists
-      source_dir = Config.source_dir_for(:wshobson_agents)
-      unless Dir.exist?(source_dir)
-        ui.error("wshobson-agents repository not found. Please run the interactive installer.")
-        return { total_files: 0, created_links: 0, skipped_files: 0 }
-      end
-
-      file_mappings = file_processor.get_file_mappings_for_component(:wshobson_agents)
-
-      if file_mappings.empty?
-        ui.warn("No wshobson agent files found to install")
-        return { total_files: 0, created_links: 0, skipped_files: 0 }
-      end
-
-      symlink_manager.create_symlinks(file_mappings)
-    end
-
-    def install_wshobson_commands
-      ui.subsection("Setting up wshobson commands")
-
-      # Ensure repository exists
-      source_dir = Config.source_dir_for(:wshobson_commands)
-      unless Dir.exist?(source_dir)
-        ui.error("wshobson-commands repository not found. Please run the interactive installer.")
-        return { total_files: 0, created_links: 0, skipped_files: 0 }
-      end
-
-      # Ensure command directories exist
-      FileUtils.mkdir_p(Config.tools_dir)
-      FileUtils.mkdir_p(Config.workflows_dir)
-
-      file_mappings = file_processor.get_file_mappings_for_component(:wshobson_commands)
-
-      if file_mappings.empty?
-        ui.warn("No wshobson command files found to install")
-        return { total_files: 0, created_links: 0, skipped_files: 0 }
-      end
-
-      symlink_manager.create_symlinks(file_mappings)
-    end
-
-    def install_awesome_agents
-      ui.subsection("Setting up awesome-claude-code-subagents")
-
-      # Ensure repository exists
-      source_dir = Config.source_dir_for(:awesome)
-      unless Dir.exist?(source_dir)
-        ui.error("awesome-claude-code-subagents repository not found. Please run the interactive installer.")
-        return { total_files: 0, created_links: 0, skipped_files: 0 }
-      end
-
-      file_mappings = file_processor.get_file_mappings_for_component(:awesome)
-
-      if file_mappings.empty?
-        ui.warn("No awesome agent files found to install")
-        return { total_files: 0, created_links: 0, skipped_files: 0 }
-      end
-
-      symlink_manager.create_symlinks(file_mappings)
-    end
+    # Removed other component installers in dLabs-only mode
 
     # Cleanup and removal checking
     def check_and_offer_removal

@@ -22,7 +22,6 @@ Thank you for your interest in contributing to the Claude Agents Collection! Thi
 - Documentation enhancements and examples
 - Bug fixes and error handling improvements
 - Testing and validation scripts
-- Performance optimizations
 
 ### External Collection Issues
 
@@ -184,7 +183,6 @@ rake test
 # Run specific test categories
 rake test:unit                              # Unit tests (70+ tests)
 rake test:integration                       # Integration tests (21+ tests)
-rake test:performance                       # Performance-focused tests
 
 # Run with specific options
 rake test:fast_fail                         # Stop on first failure
@@ -248,7 +246,6 @@ rm -rf ~/.claude/commands/wshobson-*
 - Troubleshooting guides
 - Integration patterns with external tools
 - Multi-agent workflow examples
-- Performance optimization tips
 
 ### Documentation Standards
 
@@ -294,7 +291,7 @@ Include:
 
 Use descriptive titles and provide:
 
-```
+```text
 **Environment:**
 - OS: [e.g., macOS 14.0, Ubuntu 22.04]
 - Claude Code version: [version]
@@ -373,24 +370,17 @@ This project follows TDD principles:
 
 - **Write tests first**: All new functionality requires tests before implementation
 - **Real data only**: No mocking - tests use actual file operations and CLI execution
-- **Comprehensive coverage**: Unit tests, integration tests, and performance tests required
-- **Performance thresholds**: Critical operations must complete under 1s, memory usage under 50MB
+- **Comprehensive coverage**: Unit and integration tests required
 
 ### Testing Standards
 
 Before contributing code changes:
 
 ```bash
-# All tests must pass
+rake test
 rake test
 
-# Code quality checks
 bundle exec rubocop
-
-# Performance verification
-rake test:performance
-
-# Manual CLI testing
 ./bin/claude-agents doctor
 ```
 
@@ -399,7 +389,7 @@ rake test:performance
 For detailed testing information, see [TESTING.md](TESTING.md). The testing guide includes:
 
 - 91+ comprehensive tests across all functionality
-- Test helpers and utilities for file operations, CLI testing, and performance monitoring
+-- Test helpers and utilities for file operations and CLI testing
 - Custom test runners and reporters
 - Continuous testing workflows
 
@@ -413,7 +403,7 @@ For detailed testing information, see [TESTING.md](TESTING.md). The testing guid
    - [ ] CHANGELOG.md updated for significant changes
    - [ ] New agents tested in Claude Code
    - [ ] Code follows project style guidelines
-   - [ ] Performance tests pass for any optimizations
+   -- [ ] (Removed) Performance tests (no longer applicable)
 
 2. **PR Description:**
    - Clear description of changes

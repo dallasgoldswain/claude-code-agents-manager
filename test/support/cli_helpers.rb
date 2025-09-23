@@ -5,7 +5,6 @@
 
 require "open3"
 require "stringio"
-require "set"
 
 module CLIHelpers
   # Execute CLI commands in test environment
@@ -76,11 +75,13 @@ module CLIHelpers
   # Assertion helpers for CLI output
   def assert_output_includes(result, text, message = nil)
     output = [result[:stdout], result[:stderr]].join
+
     assert_includes output, text, message || "Expected output to include '#{text}'"
   end
 
   def assert_output_matches(result, pattern, message = nil)
     output = [result[:stdout], result[:stderr]].join
+
     assert_match pattern, output, message || "Expected output to match #{pattern}"
   end
 
@@ -123,42 +124,34 @@ module CLIHelpers
 
   # Mock external commands
   def mock_system_command(command, return_value: true)
-    # Initialize class-level tracking if needed (only once)
-    unless defined?(@@system_mocked)
-      @@original_system = Object.method(:system)
-      @@mocked_commands = Set.new
-      @@system_mocked = false
-    end
+    @__original_system ||= Object.method(:system)
+    @__mocked_commands ||= Set.new
+    @__system_mocked ||= false
 
-    # Add command to mock list
-    @@mocked_commands.add(command)
+    @__mocked_commands.add(command)
+    return if @__system_mocked
 
-    # Only define the singleton method once
-    return if @@system_mocked
+    @__system_mocked = true
 
-    @@system_mocked = true
-
-    # Create the mock to handle all commands
     Object.define_singleton_method(:system) do |cmd|
-      if @@mocked_commands.any? { |mock_cmd| cmd.include?(mock_cmd) }
+      if @__mocked_commands.any? { |mock_cmd| cmd.include?(mock_cmd) }
         return_value
       else
-        @@original_system.call(cmd)
+        @__original_system.call(cmd)
       end
     end
   end
 
   def restore_system_command
-    return unless defined?(@@system_mocked) && @@system_mocked
+    return unless defined?(@__system_mocked) && @__system_mocked
 
-    # Remove the singleton method first to avoid redefinition warning
-    Object.singleton_class.send(:remove_method, :system) if Object.singleton_methods.include?(:system)
+    if Object.singleton_methods.include?(:system)
+      Object.singleton_class.send(:remove_method, :system)
+    end
 
-    # Restore original system method
-    Object.define_singleton_method(:system, @@original_system)
-
-    @@mocked_commands.clear
-    @@system_mocked = false
+    Object.define_singleton_method(:system, @__original_system)
+    @__mocked_commands&.clear
+    @__system_mocked = false
   end
 
   def mock_git_commands

@@ -13,7 +13,7 @@ $LOAD_PATH.unshift(root_dir.join("lib"))
 $LOAD_PATH.unshift(root_dir.join("test"))
 
 class TestRunner
-  VALID_SUITES = %w[all unit integration performance].freeze
+  VALID_SUITES = %w[all unit integration].freeze
 
   def initialize
     @options = {
@@ -38,8 +38,6 @@ class TestRunner
       run_unit_tests
     when "integration"
       run_integration_tests
-    when "performance"
-      run_performance_tests
     else
       puts "❌ Invalid test suite: #{@options[:suite]}"
       puts "   Valid options: #{VALID_SUITES.join(', ')}"
@@ -53,8 +51,10 @@ class TestRunner
     OptionParser.new do |opts|
       opts.banner = "Usage: bin/test [options]"
 
-      opts.on("-s", "--suite SUITE", VALID_SUITES,
-              "Test suite to run (all, unit, integration, performance)") do |suite|
+      opts.on(
+        "-s", "--suite SUITE", VALID_SUITES,
+        "Test suite to run (all, unit, integration)"
+      ) do |suite|
         @options[:suite] = suite
       end
 
@@ -90,39 +90,6 @@ class TestRunner
   def run_integration_tests
     cmd = base_test_command(["test/integration/**/*_test.rb"])
     system(cmd)
-  end
-
-  def run_performance_tests
-    puts "⚡ Running performance-specific tests..."
-
-    # Load test files and run performance tests specifically
-    test_files = Dir["test/**/*_test.rb"]
-
-    require_relative "../test/test_helper"
-
-    test_files.each { |f| require_relative "../#{f}" }
-
-    performance_tests = []
-
-    Minitest::Test.subclasses.each do |test_class|
-      test_class.runnable_methods.each do |method|
-        if method.include?("performance") || method.include?("large") || method.include?("benchmark")
-          performance_tests << "#{test_class}##{method}"
-        end
-      end
-    end
-
-    if performance_tests.empty?
-      puts "📊 No performance tests found"
-    else
-      puts "📊 Found #{performance_tests.length} performance tests:"
-      performance_tests.each { |test| puts "  • #{test}" }
-      puts
-
-      # Run performance tests
-      cmd = "#{base_test_command(['test/**/*_test.rb'])} --name=/performance|large|benchmark/"
-      system(cmd)
-    end
   end
 
   def base_test_command(patterns)

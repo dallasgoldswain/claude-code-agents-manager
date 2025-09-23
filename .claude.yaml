@@ -18,21 +18,19 @@ auto_invoke:
   - pattern: "lib/*/cli.rb"
     agent: cli-gem-expert
 
-  # Testing and performance
+  # Testing patterns
   - pattern: "test/**/*_test.rb"
-    agent: ruby-performance-tester
+    agent: ruby-expert-pro
 
 # Agent collaboration rules
 collaboration:
   # When creating new features, use multiple agents
   feature_development:
-    - ruby-expert-pro # Core implementation
-    - ruby-performance-tester # Generate tests
+    - ruby-expert-pro # Core implementation & tests
 
   cli_creation:
     - cli-gem-expert # Gem structure
-    - ruby-expert-pro # Core logic
-    - ruby-performance-tester # Test suite
+    - ruby-expert-pro # Core logic & tests
 
 # Project-specific settings
 project:
@@ -45,11 +43,7 @@ project:
     max_line_length: 100
     indent_size: 2
 
-  # Performance thresholds
-  performance:
-    max_query_time: 100 # milliseconds
-    max_memory_usage: 100 # megabytes
-    min_test_coverage: 90 # percentage
+  # (Performance thresholds fully removed in slim baseline)
 
 # Tool configurations
 tools:
@@ -94,13 +88,7 @@ commands:
       - simplecov
       - brakeman
 
-  # Performance analysis
-  performance_analysis:
-    description: "Analyze application performance"
-    steps:
-      - ruby-prof
-      - memory_profiler
-      - benchmark-ips
+  # (Legacy performance analysis command removed)
 
 # Agent behaviors
 behaviors:
@@ -110,8 +98,7 @@ behaviors:
   # Automatically generate tests
   auto_generate_tests: true
 
-  # Include performance benchmarks
-  include_benchmarks: true
+  # (Benchmarks removed in slim baseline – no runtime benchmarking toggles)
 
   # Add documentation
   generate_yard_docs: true
@@ -124,10 +111,7 @@ behaviors:
 
 # Notification settings
 notifications:
-  # Alert on performance issues
-  performance_alerts:
-    enabled: true
-    threshold: 100 # ms
+  # (Performance alerting removed)
 
   # Security vulnerability alerts
   security_alerts:
@@ -148,11 +132,10 @@ notifications:
 environments:
   development:
     default_agent: ruby-expert-pro
-    performance:
-      max_query_time: 200
+    # (Performance tuning settings removed)
 
   test:
-    default_agent: ruby-performance-tester
+    default_agent: ruby-expert-pro
     behaviors:
       auto_generate_tests: true
 
@@ -163,8 +146,6 @@ environments:
 
   production:
     default_agent: ruby-expert-pro
-    performance:
-      max_query_time: 50
     security:
       enforce_strong_params: true
       require_authentication: true

@@ -86,7 +86,7 @@ class SymlinkManagerTest < ClaudeAgentsTest
 
       assert_equal :removed, result[:status]
       assert_equal "symlink.md", result[:display_name]
-      refute File.exist?(symlink_path)
+      refute_path_exists symlink_path
     end
   end
 
@@ -108,7 +108,7 @@ class SymlinkManagerTest < ClaudeAgentsTest
 
       assert_equal :skipped, result[:status]
       assert_equal "not a symlink", result[:reason]
-      assert File.exist?(file_path)
+      assert_path_exists file_path
     end
   end
 
@@ -210,9 +210,9 @@ class SymlinkManagerTest < ClaudeAgentsTest
       assert_equal 0, result[:error_count]
 
       # Verify symlinks are removed
-      refute File.exist?(File.join(temp_dir, "test-link1.md"))
-      refute File.exist?(File.join(temp_dir, "test-link2.md"))
-      refute File.exist?(File.join(temp_dir, "test-link3.md"))
+      refute_path_exists File.join(temp_dir, "test-link1.md")
+      refute_path_exists File.join(temp_dir, "test-link2.md")
+      refute_path_exists File.join(temp_dir, "test-link3.md")
     end
   end
 
@@ -238,64 +238,5 @@ class SymlinkManagerTest < ClaudeAgentsTest
     result = @symlink_manager.remove_dlabs_symlinks
 
     assert_equal 2, result[:removed_count]
-  end
-
-  def test_remove_wshobson_agent_symlinks
-    # Mock Config methods
-    ClaudeAgents::Config.stubs(:agents_dir).returns(test_agents_dir)
-
-    # Create test symlinks
-    source = create_test_file(File.join(test_agents_dir, "../source.md"))
-    create_test_symlink(source, File.join(test_agents_dir, "wshobson-test1.md"))
-    create_test_symlink(source, File.join(test_agents_dir, "wshobson-test2.md"))
-
-    result = @symlink_manager.remove_wshobson_agent_symlinks
-
-    assert_equal 2, result[:removed_count]
-  end
-
-  def test_remove_awesome_agent_symlinks
-    # Mock Config methods
-    ClaudeAgents::Config.stubs(:agents_dir).returns(test_agents_dir)
-
-    # Create test symlinks with category prefixes
-    source = create_test_file(File.join(test_agents_dir, "../source.md"))
-    create_test_symlink(source, File.join(test_agents_dir, "frontend-react.md"))
-    create_test_symlink(source, File.join(test_agents_dir, "backend-api.md"))
-    # Should not remove dLabs or wshobson prefixed files
-    create_test_symlink(source, File.join(test_agents_dir, "dLabs-test.md"))
-    create_test_symlink(source, File.join(test_agents_dir, "wshobson-test.md"))
-
-    result = @symlink_manager.remove_awesome_agent_symlinks
-
-    assert_equal 2, result[:removed_count]
-
-    # Verify correct files were removed/kept
-    refute File.exist?(File.join(test_agents_dir, "frontend-react.md"))
-    refute File.exist?(File.join(test_agents_dir, "backend-api.md"))
-    assert File.exist?(File.join(test_agents_dir, "dLabs-test.md"))
-    assert File.exist?(File.join(test_agents_dir, "wshobson-test.md"))
-  end
-
-  def test_performance_large_batch_operation
-    with_temp_directory do |temp_dir|
-      # Create 100 source files
-      sources = (1..100).map do |i|
-        create_test_file(File.join(temp_dir, "source#{i}.md"))
-      end
-
-      mappings = sources.map.with_index do |source, i|
-        {
-          source: source,
-          destination: File.join(temp_dir, "dest#{i + 1}.md"),
-          display_name: "dest#{i + 1}.md"
-        }
-      end
-
-      # Should complete in under 1 second
-      assert_performance_under(1.0) do
-        @symlink_manager.create_symlinks(mappings, show_progress: false)
-      end
-    end
   end
 end

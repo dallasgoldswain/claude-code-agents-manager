@@ -11,7 +11,9 @@ require "mocha/minitest"
 require "fileutils"
 require "tempfile"
 require "tmpdir"
-require "benchmark"
+
+# Default to quiet UI output unless explicitly verbose
+ENV["QUIET_TEST"] ||= "1" unless ENV["VERBOSE_TEST"] == "1"
 
 # Reporter selection:
 # Default: SpecReporter (detailed per-test output)
@@ -27,8 +29,12 @@ if ENV["FAILURES_ONLY"] == "1"
         @project_root = File.expand_path("..", __dir__)
       end
 
+      # Minitest Reporters may call these lifecycle hooks; implement no-ops to avoid NoMethodError
+      def before_test(_test); end
+      def after_test(_test); end
+
       def record(result)
-        super
+        super # updates statistics
         @failed << result unless result.passed?
 
         # When failing fast, print the failure immediately (so user gets context before exit)
@@ -45,14 +51,21 @@ if ENV["FAILURES_ONLY"] == "1"
           @failed.each_with_index { |r, i| print_failure_block(r, index: i + 1) }
         end
 
-        summary_color = failures.zero? && errors.zero? ? "32" : "31" # green if all good else red
+        # Some counters can appear nil in edge reporter lifecycle cases; treat nil as zero
+        f = failures.to_i
+        e = errors.to_i
+        s = skips.to_i
+        a = assertions.to_i
+        c = count.to_i
+
+        summary_color = f.zero? && e.zero? ? "32" : "31" # green if all good else red
         parts = []
-        parts << color("#{count} tests", summary_color)
-        parts << color("#{assertions} assertions", "36")
-        parts << color("#{failures} failures", failures.zero? ? "32" : "31;1")
-        parts << color("#{errors} errors", errors.zero? ? "32" : "31;1")
-        parts << color("#{skips} skips", skips.zero? ? "90" : "33")
-        io.puts "\n" + parts.join(", ")
+        parts << color("#{c} tests", summary_color)
+        parts << color("#{a} assertions", "36")
+        parts << color("#{f} failures", f.zero? ? "32" : "31;1")
+        parts << color("#{e} errors", e.zero? ? "32" : "31;1")
+        parts << color("#{s} skips", s.zero? ? "90" : "33")
+        io.puts "\n#{parts.join(', ')}"
       end
 
       private
@@ -99,7 +112,8 @@ if ENV["FAIL_FAST"] == "1"
       def run
         result = _original_run
         # If this test failed or errored, abort immediately.
-        unless passed?
+        # Don't abort on skipped tests (result.skipped? returns true for skipped tests)
+        unless passed? || skipped?
           unless ENV["FAILURES_ONLY"] == "1"
             # When not using failures-only reporter, emit a concise failure block now.
             failure = self.failure
@@ -158,10 +172,19 @@ module TestHelpers
 
   # Create a test UI instance that captures output
   def create_test_ui
-    ui = ClaudeAgents::UI.new
+    # Ensure UI class is autoloaded
+    ui_class = ClaudeAgents::UI
+    ui = ui_class.new
 
     # Mock TTY methods to work in test environment
-    ui.define_singleton_method(:puts) { |msg| $stdout.puts(msg) }
+    # Accept zero or more arguments like Kernel#puts (newline when none provided)
+    ui.define_singleton_method(:puts) do |*args|
+      if args.empty?
+        $stdout.puts
+      else
+        args.each { |arg| $stdout.puts(arg) }
+      end
+    end
     ui.define_singleton_method(:print) { |msg| $stdout.print(msg) }
 
     # Mock interactive prompts
@@ -173,22 +196,34 @@ module TestHelpers
     ui.define_singleton_method(:prompt) { prompt }
 
     # Mock UI output methods to prevent TTY dependencies
+    quiet = ENV["QUIET_TEST"] == "1"
     %w[success info warn error linked removed skipped].each do |method|
-      ui.define_singleton_method(method) { |msg| puts "[#{method.upcase}] #{msg}" }
+      if quiet
+        ui.define_singleton_method(method) { |_msg| nil }
+      else
+        ui.define_singleton_method(method) { |msg| puts "[#{method.upcase}] #{msg}" }
+      end
     end
 
     # Mock progress methods
     ui.define_singleton_method(:progress_bar) do |_title, _total|
       progress = Object.new
-      progress.define_singleton_method(:advance) {}
-      progress.define_singleton_method(:finish) {}
+      progress.define_singleton_method(:advance) { nil }
+      progress.define_singleton_method(:finish) { nil }
       progress
     end
 
-    ui.define_singleton_method(:title) { |msg| puts "=== #{msg} ===" }
-    ui.define_singleton_method(:subsection) { |msg| puts "--- #{msg} ---" }
-    ui.define_singleton_method(:newline) { puts }
-    ui.define_singleton_method(:dim) { |msg| puts msg }
+    if quiet
+      ui.define_singleton_method(:title) { |_msg| nil }
+      ui.define_singleton_method(:subsection) { |_msg| nil }
+      ui.define_singleton_method(:newline) { nil }
+      ui.define_singleton_method(:dim) { |_msg| nil }
+    else
+      ui.define_singleton_method(:title) { |msg| puts "=== #{msg} ===" }
+      ui.define_singleton_method(:subsection) { |msg| puts "--- #{msg} ---" }
+      ui.define_singleton_method(:newline) { puts }
+      ui.define_singleton_method(:dim) { |msg| puts msg }
+    end
 
     ui
   end
@@ -196,9 +231,13 @@ module TestHelpers
   private
 
   def setup_test_environment
+    # Ensure main module loaded (idempotent)
+    require "claude_agents" unless defined?(ClaudeAgents)
     # Create temporary test directory
     @test_dir = Dir.mktmpdir("claude_agents_test")
-    @original_claude_dir = ClaudeAgents::Config.instance_variable_get(:@claude_dir)
+    # Ensure Config class is autoloaded before accessing instance variables
+    config_class = ClaudeAgents::Config
+    @original_claude_dir = config_class.instance_variable_get(:@claude_dir)
 
     # Override paths to use test directory
     ClaudeAgents::Config.instance_variable_set(:@claude_dir, @test_dir)
@@ -214,12 +253,15 @@ module TestHelpers
   end
 
   def cleanup_test_environment
-    # Restore original paths
-    ClaudeAgents::Config.instance_variable_set(:@claude_dir, @original_claude_dir)
-    ClaudeAgents::Config.instance_variable_set(:@agents_dir, nil)
-    ClaudeAgents::Config.instance_variable_set(:@commands_dir, nil)
-    ClaudeAgents::Config.instance_variable_set(:@tools_dir, nil)
-    ClaudeAgents::Config.instance_variable_set(:@workflows_dir, nil)
+    # Only clean up if ClaudeAgents is loaded (Zeitwerk compatibility)
+    if defined?(ClaudeAgents::Config)
+      # Restore original paths
+      ClaudeAgents::Config.instance_variable_set(:@claude_dir, @original_claude_dir)
+      ClaudeAgents::Config.instance_variable_set(:@agents_dir, nil)
+      ClaudeAgents::Config.instance_variable_set(:@commands_dir, nil)
+      ClaudeAgents::Config.instance_variable_set(:@tools_dir, nil)
+      ClaudeAgents::Config.instance_variable_set(:@workflows_dir, nil)
+    end
 
     # Clean up test directory
     FileUtils.rm_rf(@test_dir) if @test_dir && Dir.exist?(@test_dir)
@@ -247,42 +289,18 @@ module TestHelpers
   end
 end
 
-# Performance testing helpers
-module PerformanceHelpers
-  def assert_performance_under(threshold, &)
-    time = Benchmark.realtime(&)
-    assert time < threshold, "Expected execution under #{threshold}s, but took #{time.round(3)}s"
-  end
-
-  def assert_memory_usage_under(threshold_mb)
-    before = memory_usage_mb
-    yield
-    after = memory_usage_mb
-    usage = after - before
-
-    assert usage < threshold_mb,
-           "Expected memory usage under #{threshold_mb}MB, but used #{usage.round(2)}MB"
-  end
-
-  private
-
-  def memory_usage_mb
-    `ps -o rss= -p #{Process.pid}`.to_i / 1024.0
-  rescue StandardError
-    0
-  end
-end
-
 # Custom assertions for CLI testing
 module CLIAssertions
   def assert_command_succeeds(command_args, message = nil)
     result = run_cli_command(command_args)
+
     assert_equal 0, result[:exit_code], message || "Command failed: #{result[:stderr]}"
     result
   end
 
   def assert_command_fails(command_args, message = nil)
     result = run_cli_command(command_args)
+
     refute_equal 0, result[:exit_code], message || "Command should have failed but succeeded"
     result
   end
@@ -295,6 +313,7 @@ module CLIAssertions
     assert File.symlink?(symlink_path), "Expected #{symlink_path} to be a symlink"
     actual_target = File.readlink(symlink_path)
     expected_target = File.expand_path(target_path)
+
     assert_equal expected_target, actual_target,
                  message || "Expected symlink to point to #{expected_target}, but points to #{actual_target}"
   end
@@ -302,6 +321,7 @@ module CLIAssertions
   def assert_file_count(directory, expected_count, pattern = "*", message = nil)
     files = Dir.glob(File.join(directory, pattern))
     actual_count = files.length
+
     assert_equal expected_count, actual_count,
                  message || "Expected #{expected_count} files in #{directory}, found #{actual_count}"
   end
@@ -310,7 +330,6 @@ end
 # Base test class for unit tests
 class ClaudeAgentsTest < Minitest::Test
   include TestHelpers
-  include PerformanceHelpers
   include CLIAssertions
   include FilesystemHelpers
 end
@@ -318,7 +337,6 @@ end
 # Base test class for integration tests
 class IntegrationTest < Minitest::Test
   include TestHelpers
-  include PerformanceHelpers
   include CLIAssertions
   include FilesystemHelpers
   include CLIHelpers

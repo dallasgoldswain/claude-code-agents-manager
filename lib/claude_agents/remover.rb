@@ -55,18 +55,7 @@ module ClaudeAgents
     def remove_component(component)
       ui.section("Removing #{Config.component_info(component)[:name]}")
 
-      case component.to_sym
-      when :dlabs
-        remove_dlabs_agents
-      when :wshobson_agents
-        remove_wshobson_agents
-      when :wshobson_commands
-        remove_wshobson_commands
-      when :awesome
-        remove_awesome_agents
-      else
-        raise ValidationError, "Unknown component: #{component}"
-      end
+      remove_dlabs_agents
     end
 
     # Remove multiple components with summary
@@ -140,38 +129,7 @@ module ClaudeAgents
       symlink_manager.remove_dlabs_symlinks
     end
 
-    def remove_wshobson_agents
-      ui.subsection("Removing wshobson agents")
-
-      unless ui.component_installed?(:wshobson_agents)
-        ui.info("No wshobson agents found to remove")
-        return { removed_count: 0, error_count: 0 }
-      end
-
-      symlink_manager.remove_wshobson_agent_symlinks
-    end
-
-    def remove_wshobson_commands
-      ui.subsection("Removing wshobson commands")
-
-      unless ui.component_installed?(:wshobson_commands)
-        ui.info("No wshobson commands found to remove")
-        return { removed_count: 0, error_count: 0 }
-      end
-
-      symlink_manager.remove_wshobson_command_symlinks
-    end
-
-    def remove_awesome_agents
-      ui.subsection("Removing awesome-claude-code-subagents")
-
-      unless ui.component_installed?(:awesome)
-        ui.info("No awesome-claude-code-subagents found to remove")
-        return { removed_count: 0, error_count: 0 }
-      end
-
-      symlink_manager.remove_awesome_agent_symlinks
-    end
+    # Other removals removed in dLabs-only mode
 
     # Utility methods
     def cleanup_empty_directories
@@ -198,18 +156,7 @@ module ClaudeAgents
     end
 
     def verify_removal(component)
-      case component.to_sym
-      when :dlabs
-        !ui.component_installed?(:dlabs)
-      when :wshobson_agents
-        !ui.component_installed?(:wshobson_agents)
-      when :wshobson_commands
-        !ui.component_installed?(:wshobson_commands)
-      when :awesome
-        !ui.component_installed?(:awesome)
-      else
-        false
-      end
+      component.to_sym == :dlabs ? !ui.component_installed?(:dlabs) : false
     end
   end
 end

@@ -9,8 +9,8 @@ This project uses **Minitest** for comprehensive testing of the Claude Code agen
 - **Simple & Fast**: Tests should be easy to understand and quick to execute
 - **TDD Approach**: Write tests before implementation
 - **Real Data**: No mocking of external APIs - use real data and file operations
-- **Performance Aware**: Monitor test execution time and memory usage
-- **Comprehensive Coverage**: Unit, integration, and performance tests
+- **Lean**: Focus on unit + integration coverage
+- **Comprehensive Coverage**: Unit and integration tests
 
 ## Test Architecture
 
@@ -40,7 +40,6 @@ test/
 |------------|-------|----------|
 | **Unit Tests** | 70+ | Core functionality |
 | **Integration Tests** | 21+ | Complete workflows |
-| **Performance Tests** | Embedded | Critical operations |
 | **Error Handling** | 13+ | Edge cases & recovery |
 | **Total** | 91+ tests | Comprehensive |
 
@@ -55,7 +54,6 @@ rake test
 # Run specific test suites
 rake test:unit                         # Unit tests only
 rake test:integration                  # Integration tests only
-rake test:performance                  # Performance-focused tests
 
 # Specialized test runs
 rake test:coverage                     # Tests with coverage reporting
@@ -86,7 +84,6 @@ bin/test
 # Run specific suites
 bin/test --suite unit
 bin/test --suite integration
-bin/test --suite performance
 
 # Run with options
 bin/test --verbose --parallel
@@ -110,7 +107,7 @@ ruby -Itest:lib test/unit/config_test.rb --seed=42 --verbose --name=test_claude_
 
 ```bash
 # Full CI pipeline locally
-rake ci:local                          # Complete pipeline (clean, test, lint, performance)
+rake ci:local                          # Complete pipeline (clean, test, lint)
 
 # Quick CI check
 rake ci:quick                          # Unit tests + linting only
@@ -123,34 +120,38 @@ rake ci:quick                          # Unit tests + linting only
 Test individual service classes in isolation with comprehensive coverage:
 
 #### **ConfigTest** (25 tests)
+
 - Configuration management and path resolution
 - Component validation and directory management
 - Environment variable handling
 - Cache management and reset functionality
 
 #### **SymlinkManagerTest** (19 tests)
-- Symlink creation, removal, and batch operations
-- Performance testing with large datasets (100+ files)
+
+-- Symlink creation, removal, and batch operations
+
 - Error handling for broken symlinks and permissions
 - Component-specific symlink patterns
 
 #### **FileProcessorTest** (14 tests)
+
 - File discovery, filtering, and mapping generation
 - Category-based naming conventions
 - Skip pattern filtering (JSON, hidden files, logs)
 - Path generation with prefix handling
 
 #### **ErrorHandlingTest** (13 tests)
+
 - Exception handling and error recovery scenarios
 - Edge case validation (nil inputs, malformed data)
 - Memory leak detection and cleanup
 - Concurrent operation error handling
 
 **Key Features:**
+
 - Isolated testing with temporary directories
 - Fast execution (< 0.1s per test)
 - Comprehensive edge case coverage
-- Performance benchmarks for critical operations
 - Memory usage monitoring
 
 ### Integration Tests (`test/integration/`) - 21+ Tests
@@ -158,30 +159,23 @@ Test individual service classes in isolation with comprehensive coverage:
 Test complete CLI workflows with real file system operations:
 
 #### **CLICommandsTest** (21 tests)
-- Complete installation and removal workflows
-- Multi-component interactions and dependencies
-- System integration validation with external tools
-- Performance testing with realistic data sizes
+
+-- Complete installation and removal workflows
+-- Multi-component interactions and dependencies
+-- System integration validation with external tools
+
 - Error recovery and concurrent operation safety
 - CLI argument parsing and validation
 - Environment variable handling in CLI context
 
 **Key Features:**
+
 - Real file system operations in isolated test environments
 - Complete CLI command execution with environment isolation
-- Performance testing with large datasets
 - Error recovery scenarios and edge case handling
 - Memory usage monitoring for large operations
 
-### Performance Tests
-
-Embedded within unit and integration tests with specific performance criteria:
-
-- **Execution time benchmarks**: Critical operations < 1s
-- **Memory usage monitoring**: Large operations < 50MB growth
-- **Large dataset handling**: 100+ files processed efficiently
-- **Concurrent operation safety**: Thread-safe operations validated
-- **Performance regression detection**: Automated benchmarking
+<!-- (section intentionally slimmed) -->
 
 ## Test Helpers and Utilities
 
@@ -251,26 +245,7 @@ capture_output { ... }
 with_env('CLAUDE_DIR' => '/tmp/test') { ... }
 ```
 
-### PerformanceHelpers Module
-
-Performance testing and benchmarking utilities:
-
-```ruby
-# Performance assertions with thresholds
-assert_performance_under(1.0) do
-  # Operation should complete in under 1 second
-  perform_large_operation
-end
-
-assert_memory_usage_under(50) do
-  # Memory growth should be under 50MB
-  process_large_dataset
-end
-
-# Benchmarking utilities
-benchmark_execution { operation }
-monitor_memory_usage { operation }
-```
+<!-- (helpers section intentionally slimmed) -->
 
 ### Test Fixtures
 
@@ -328,42 +303,6 @@ assert_memory_cleanup_on_errors
 assert_validation_edge_cases          # nil, empty, malformed inputs
 ```
 
-### Performance Monitoring
-
-Built-in performance tracking and regression detection:
-
-```ruby
-# Execution time benchmarking
-def test_performance_large_operation
-  assert_performance_under(1.0) do
-    @processor.get_file_mappings_for_component(:awesome)
-  end
-end
-
-# Memory usage tracking
-def test_memory_usage_large_dataset
-  before_objects = ObjectSpace.count_objects
-
-  100.times { create_large_operation }
-
-  GC.start
-  after_objects = ObjectSpace.count_objects
-  object_growth = after_objects[:T_DATA] - before_objects[:T_DATA]
-
-  assert object_growth < 1000, "Memory leak detected: #{object_growth} objects"
-end
-
-# Concurrent operation safety
-def test_concurrent_operations
-  threads = 5.times.map do
-    Thread.new { perform_thread_safe_operation }
-  end
-
-  results = threads.map(&:value)
-  assert results.all?(&:success?)
-end
-```
-
 ## Development Workflow
 
 ### Test-Driven Development
@@ -374,7 +313,7 @@ Follow TDD principles with comprehensive test coverage:
 2. **Implement minimal code** to make test pass
 3. **Refactor code** while keeping tests green
 4. **Add edge cases** and error handling tests
-5. **Performance tests** for critical operations
+5. (Removed) standalone extra test category
 
 ### Continuous Testing
 
@@ -391,20 +330,9 @@ rake test:unit            # Fast unit tests only
 rake dev:check           # Tests + linting + coverage
 ```
 
-### Performance Tracking
+### Performance Tracking (Removed)
 
-Monitor and benchmark performance over time:
-
-```bash
-# Performance benchmarking
-rake dev:benchmark        # Benchmark test execution times
-
-# Performance-specific tests
-rake test:performance     # Run performance-focused tests
-
-# Memory profiling
-rake test:coverage        # Include memory usage tracking
-```
+Use targeted benchmarks manually if needed.
 
 ## Writing New Tests
 
@@ -440,12 +368,7 @@ class NewComponentTest < ClaudeAgentsTest
     assert_includes error.message, 'expected error description'
   end
 
-  def test_performance_large_input
-    # Performance testing with realistic thresholds
-    assert_performance_under(0.1) do
-      @component.process(create_large_input)
-    end
-  end
+  # Removed additional threshold example
 
   def test_edge_cases
     # Test boundary conditions
@@ -500,15 +423,7 @@ class NewFeatureIntegrationTest < IntegrationTest
     assert_directory_empty test_agents_dir
   end
 
-  def test_performance_with_large_dataset
-    # Create large realistic test dataset
-    create_large_test_structure(100)
-
-    assert_performance_under(5.0) do
-      result = run_cli_command(['process-all'])
-      assert_successful_execution result
-    end
-  end
+  # Removed dataset size stress example
 end
 ```
 
@@ -533,14 +448,9 @@ end
 1. **Test failure modes**: Verify proper error handling and recovery
 2. **Validate error messages**: Ensure error messages are helpful and actionable
 3. **Test edge cases**: Handle malformed input and system failures gracefully
-4. **Performance impact**: Ensure errors don't cause memory leaks or performance degradation
+4. Ensure errors don't cause resource leaks
 
-### Performance Testing Guidelines
-
-1. **Set realistic thresholds**: Define acceptable performance limits based on usage
-2. **Monitor trends**: Track performance over time to detect regressions
-3. **Test realistic scenarios**: Use representative data sizes and operations
-4. **Memory awareness**: Monitor memory usage patterns and prevent leaks
+<!-- Performance guideline section removed -->
 
 ## Troubleshooting
 
@@ -587,7 +497,7 @@ rake dev:benchmark | grep "Slow test"
 
 ### Test Distribution
 
-```
+```text
 Unit Tests (70+ tests):
 ├── ConfigTest (25 tests)           ✅ Configuration management
 ├── SymlinkManagerTest (19 tests)   ✅ Symlink operations
@@ -597,8 +507,7 @@ Unit Tests (70+ tests):
 Integration Tests (21+ tests):
 └── CLICommandsTest (21 tests)      ✅ Complete workflows
 
-Performance Tests:
-└── Embedded throughout all suites  ✅ Critical operations
+<!-- Legacy performance test listing removed -->
 ```
 
 ### Quality Metrics
@@ -608,4 +517,4 @@ Performance Tests:
 - **Error resilient**: Comprehensive error condition coverage
 - **CI ready**: Full automation with parallel execution support
 
-This comprehensive testing strategy provides confidence in the Claude Agents CLI functionality while maintaining excellent performance and developer experience. The test suite serves as both validation and living documentation of the system's capabilities.
+This comprehensive testing strategy provides confidence in the Claude Agents CLI functionality while maintaining developer experience. The test suite serves as both validation and living documentation of the system's capabilities.

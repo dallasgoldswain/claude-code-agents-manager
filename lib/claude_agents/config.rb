@@ -3,58 +3,36 @@
 module ClaudeAgents
   # Configuration management with validation and path handling
   class Config
-    REPOSITORIES = {
-      awesome: {
-        url: "VoltAgent/awesome-claude-code-subagents",
-        dir: "agents/awesome-claude-code-subagents",
-        description: "116 industry-standard agents"
-      },
-      wshobson_agents: {
-        url: "wshobson/agents",
-        dir: "agents/wshobson-agents",
-        description: "82 production-ready agents"
-      },
-      wshobson_commands: {
-        url: "wshobson/commands",
-        dir: "agents/wshobson-commands",
-        description: "56 workflow tools"
-      }
-    }.freeze
+    # External repositories removed in dLabs-only mode
+    REPOSITORIES = {}.freeze
 
     COMPONENTS = {
       dlabs: {
         name: "dLabs agents",
         description: "Local specialized agents",
-        count: 5,
-        source_dir: "agents/dallasLabs",
+        # NOTE: Count reflects current number of dLabs agent markdown files.
+        count: 7,
+        source_dir: "agents/dallasLabs/agents",
         prefix: "dLabs-",
         destination: :agents
-      },
-      awesome: {
-        name: "awesome-claude-code-subagents",
-        description: "116 industry-standard agents",
-        count: 116,
-        source_dir: "agents/awesome-claude-code-subagents",
-        prefix: nil, # Category-based
-        destination: :agents
-      },
-      wshobson_agents: {
-        name: "wshobson agents",
-        description: "82 production-ready agents",
-        count: 82,
-        source_dir: "agents/wshobson-agents",
-        prefix: "wshobson-",
-        destination: :agents
-      },
-      wshobson_commands: {
-        name: "wshobson commands",
-        description: "56 workflow tools",
-        count: 56,
-        source_dir: "agents/wshobson-commands",
-        prefix: nil,
-        destination: :commands
       }
     }.freeze
+
+    # Fallback skip patterns used when the top-level ClaudeAgents::CONFIG
+    # constant is unavailable (defensive for test isolation scenarios).
+    # This keeps unit tests (e.g. Config.skip_file?) functioning without
+    # triggering a NameError when referencing the global configuration.
+    DEFAULT_SKIP_PATTERNS = [
+      /^readme/i,
+      /^license/i,
+      /^contributing/i,
+      /^examples/i,
+      /^setup_.*\.sh$/,
+      /^\./,      # Hidden files
+      /\.json$/,  # JSON configuration files
+      /\.txt$/,   # Text files
+      /\.log$/    # Log files
+    ].freeze
 
     class << self
       def claude_dir
@@ -136,7 +114,15 @@ module ClaudeAgents
       end
 
       def skip_file?(filename)
-        ClaudeAgents::CONFIG[:skip_patterns].any? { |pattern| filename.match?(pattern) }
+        patterns = if defined?(ClaudeAgents) &&
+                      ClaudeAgents.const_defined?(:CONFIG) &&
+                      ClaudeAgents::CONFIG[:skip_patterns]
+                     ClaudeAgents::CONFIG[:skip_patterns]
+                   else
+                     DEFAULT_SKIP_PATTERNS
+                   end
+
+        patterns.any? { |pattern| filename.match?(pattern) }
       end
 
       def valid_component?(component)

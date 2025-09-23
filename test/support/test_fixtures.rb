@@ -39,33 +39,10 @@ module TestFixtures
     Specialized test agent for dLabs collection.
   AGENT
 
-  WSHOBSON_AGENT_CONTENT = <<~AGENT
-    ---
-    name: test-backend-engineer
-    description: Backend engineering agent
-    tools: ['editor', 'bash', 'database']
-    ---
-
-    # Backend Engineer Agent
-
-    Production-ready backend development agent.
-  AGENT
-
-  AWESOME_AGENT_CONTENT = <<~AGENT
-    ---
-    name: frontend-developer
-    description: Frontend development specialist
-    tools: ['editor', 'browser']
-    ---
-
-    # Frontend Developer
-
-    Industry-standard frontend development agent.
-  AGENT
-
   # Directory structure fixtures
   def self.create_dlabs_fixture(base_dir)
-    dlabs_dir = File.join(base_dir, "agents", "dallasLabs")
+    # Mirror actual project structure: agents/dallasLabs/agents/*.md
+    dlabs_dir = File.join(base_dir, "agents", "dallasLabs", "agents")
     FileUtils.mkdir_p(dlabs_dir)
 
     agents = %w[
@@ -74,6 +51,8 @@ module TestFixtures
       data-analysis-expert.md
       python-backend-engineer.md
       debug-specialist.md
+      ruby-expert.md
+      joker.md
     ]
 
     agents.each do |agent|
@@ -83,97 +62,11 @@ module TestFixtures
     dlabs_dir
   end
 
-  def self.create_wshobson_agents_fixture(base_dir)
-    agents_dir = File.join(base_dir, "agents", "wshobson-agents")
-    FileUtils.mkdir_p(agents_dir)
-
-    # Create a subset of agents for testing
-    agents = %w[
-      backend-engineer.md
-      frontend-developer.md
-      devops-specialist.md
-      qa-engineer.md
-      architect.md
-    ]
-
-    agents.each do |agent|
-      File.write(File.join(agents_dir, agent), WSHOBSON_AGENT_CONTENT)
-    end
-
-    agents_dir
-  end
-
-  def self.create_wshobson_commands_fixture(base_dir)
-    commands_dir = File.join(base_dir, "agents", "wshobson-commands")
-    tools_dir = File.join(commands_dir, "tools")
-    workflows_dir = File.join(commands_dir, "workflows")
-
-    FileUtils.mkdir_p([tools_dir, workflows_dir])
-
-    # Create tool files
-    tools = %w[
-      git-workflow.md
-      testing-suite.md
-      deployment.md
-    ]
-
-    tools.each do |tool|
-      content = <<~TOOL
-        # #{File.basename(tool, '.md').gsub('-', ' ').split.map(&:capitalize).join(' ')}
-
-        Tool for #{File.basename(tool, '.md')}.
-      TOOL
-      File.write(File.join(tools_dir, tool), content)
-    end
-
-    # Create workflow files
-    workflows = %w[
-      full-stack-development.md
-      ci-cd-pipeline.md
-    ]
-
-    workflows.each do |workflow|
-      content = <<~WORKFLOW
-        # #{File.basename(workflow, '.md').gsub('-', ' ').split.map(&:capitalize).join(' ')}
-
-        Workflow for #{File.basename(workflow, '.md')}.
-      WORKFLOW
-      File.write(File.join(workflows_dir, workflow), content)
-    end
-
-    commands_dir
-  end
-
-  def self.create_awesome_agents_fixture(base_dir)
-    awesome_dir = File.join(base_dir, "agents", "awesome-claude-code-subagents")
-    FileUtils.mkdir_p(awesome_dir)
-
-    # Create category-based structure
-    categories = {
-      "frontend" => %w[react-developer.md vue-specialist.md],
-      "backend" => %w[api-architect.md database-expert.md],
-      "devops" => %w[kubernetes-expert.md terraform-specialist.md]
-    }
-
-    categories.each do |category, agents|
-      category_dir = File.join(awesome_dir, "categories", category)
-      FileUtils.mkdir_p(category_dir)
-
-      agents.each do |agent|
-        File.write(File.join(category_dir, agent), AWESOME_AGENT_CONTENT)
-      end
-    end
-
-    awesome_dir
-  end
-
   # Component configuration for testing
   def self.create_full_test_structure(base_dir)
     {
-      dlabs: create_dlabs_fixture(base_dir),
-      wshobson_agents: create_wshobson_agents_fixture(base_dir),
-      wshobson_commands: create_wshobson_commands_fixture(base_dir),
-      awesome: create_awesome_agents_fixture(base_dir)
+      dlabs: create_dlabs_fixture(base_dir)
+      # Other components omitted intentionally for dLabs-only test focus
     }
   end
 

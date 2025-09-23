@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "zeitwerk"
 require "thor"
 require "pastel"
 require "tty-prompt"
@@ -11,14 +12,8 @@ require "fileutils"
 require "pathname"
 
 module ClaudeAgents
-  class Error < StandardError; end
-  class InstallationError < Error; end
-  class RemovalError < Error; end
-  class FileOperationError < Error; end
-  class ValidationError < Error; end
-
   # Version information
-  VERSION = "0.3.0"
+  VERSION = "0.4.1"
 
   # Global configuration
   CONFIG = {
@@ -26,16 +21,10 @@ module ClaudeAgents
     agents_dir: File.expand_path("~/.claude/agents"),
     commands_dir: File.expand_path("~/.claude/commands"),
     source_dirs: {
-      dlabs: "dallasLabs",
-      wshobson_agents: "wshobson-agents",
-      wshobson_commands: "wshobson-commands",
-      awesome: "awesome-claude-code-subagents"
+      dlabs: "dallasLabs"
     },
     prefixes: {
-      dlabs: "dLabs-",
-      wshobson_agents: "wshobson-",
-      wshobson_commands: nil,
-      awesome: nil # Category-based prefixes
+      dlabs: "dLabs-"
     },
     skip_patterns: [
       /^readme/i,
@@ -51,12 +40,12 @@ module ClaudeAgents
   }.freeze
 end
 
-# Load all components
+# Setup Zeitwerk loader
+loader = Zeitwerk::Loader.for_gem
+loader.inflector.inflect("ui" => "UI", "cli" => "CLI")
+loader.ignore("#{__dir__}/claude_agents/errors.rb")
+loader.setup
+loader.eager_load if ENV["CLAUDE_AGENTS_EAGER_LOAD"] == "true"
+
+# Manually require error classes since they don't follow Zeitwerk conventions
 require_relative "claude_agents/errors"
-require_relative "claude_agents/config"
-require_relative "claude_agents/ui"
-require_relative "claude_agents/file_processor"
-require_relative "claude_agents/symlink_manager"
-require_relative "claude_agents/installer"
-require_relative "claude_agents/remover"
-require_relative "claude_agents_cli"

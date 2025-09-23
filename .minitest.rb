@@ -19,15 +19,8 @@ Minitest::Reporters.use! [
 # Test execution options
 module Minitest
   def self.plugin_claude_agents_init(options)
-    # Set random seed for reproducible test runs
+    # Set random seed for reproducible test runs (removed slow test monitoring)
     self.seed = options[:seed] || 42
-
-    # Performance monitoring
-    reporter << lambda do |result|
-      if result.time > 1.0
-        puts "⚠️  Slow test: #{result.class}##{result.name} (#{result.time.round(2)}s)"
-      end
-    end
   end
 end
 

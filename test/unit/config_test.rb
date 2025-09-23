@@ -16,21 +16,25 @@ class ConfigTest < ClaudeAgentsTest
 
   def test_agents_dir_builds_from_claude_dir
     expected = File.join(ClaudeAgents::Config.claude_dir, "agents")
+
     assert_equal expected, ClaudeAgents::Config.agents_dir
   end
 
   def test_commands_dir_builds_from_claude_dir
     expected = File.join(ClaudeAgents::Config.claude_dir, "commands")
+
     assert_equal expected, ClaudeAgents::Config.commands_dir
   end
 
   def test_tools_dir_builds_from_commands_dir
     expected = File.join(ClaudeAgents::Config.commands_dir, "tools")
+
     assert_equal expected, ClaudeAgents::Config.tools_dir
   end
 
   def test_workflows_dir_builds_from_commands_dir
     expected = File.join(ClaudeAgents::Config.commands_dir, "workflows")
+
     assert_equal expected, ClaudeAgents::Config.workflows_dir
   end
 
@@ -44,39 +48,42 @@ class ConfigTest < ClaudeAgentsTest
 
   def test_source_dir_for_valid_component
     result = ClaudeAgents::Config.source_dir_for(:dlabs)
-    expected = File.join(ClaudeAgents::Config.project_root, "agents/dallasLabs")
+    expected = File.join(ClaudeAgents::Config.project_root, "agents/dallasLabs/agents")
 
     assert_equal expected, result
   end
 
   def test_source_dir_for_invalid_component
     result = ClaudeAgents::Config.source_dir_for(:nonexistent)
+
     assert_nil result
   end
 
   def test_destination_dir_for_agents_component
     result = ClaudeAgents::Config.destination_dir_for(:dlabs)
+
     assert_equal ClaudeAgents::Config.agents_dir, result
   end
 
+  # No commands component in dLabs-only mode
   def test_destination_dir_for_commands_component
-    result = ClaudeAgents::Config.destination_dir_for(:wshobson_commands)
-    assert_equal ClaudeAgents::Config.commands_dir, result
+    assert_nil ClaudeAgents::Config.destination_dir_for(:wshobson_commands)
   end
 
   def test_destination_dir_for_invalid_component
     result = ClaudeAgents::Config.destination_dir_for(:nonexistent)
+
     assert_nil result
   end
 
   def test_prefix_for_component_with_prefix
     result = ClaudeAgents::Config.prefix_for(:dlabs)
+
     assert_equal "dLabs-", result
   end
 
   def test_prefix_for_component_without_prefix
-    result = ClaudeAgents::Config.prefix_for(:awesome)
-    assert_nil result
+    assert_nil ClaudeAgents::Config.prefix_for(:awesome)
   end
 
   def test_component_exists_with_valid_component
@@ -90,18 +97,12 @@ class ConfigTest < ClaudeAgentsTest
   end
 
   def test_repository_for_valid_component
-    result = ClaudeAgents::Config.repository_for(:awesome)
-    expected = {
-      url: "VoltAgent/awesome-claude-code-subagents",
-      dir: "agents/awesome-claude-code-subagents",
-      description: "116 industry-standard agents"
-    }
-
-    assert_equal expected, result
+    assert_nil ClaudeAgents::Config.repository_for(:dlabs), "No external repo for dLabs"
   end
 
   def test_repository_for_invalid_component
     result = ClaudeAgents::Config.repository_for(:nonexistent)
+
     assert_nil result
   end
 
@@ -155,12 +156,7 @@ class ConfigTest < ClaudeAgentsTest
   end
 
   def test_valid_component_with_valid_components
-    valid_components = %i[dlabs awesome wshobson_agents wshobson_commands]
-
-    valid_components.each do |component|
-      assert ClaudeAgents::Config.valid_component?(component),
-             "Expected #{component} to be valid"
-    end
+    assert ClaudeAgents::Config.valid_component?(:dlabs)
   end
 
   def test_valid_component_with_invalid_component
@@ -168,10 +164,7 @@ class ConfigTest < ClaudeAgentsTest
   end
 
   def test_all_components_returns_all_keys
-    expected = %i[dlabs awesome wshobson_agents wshobson_commands]
-    result = ClaudeAgents::Config.all_components
-
-    assert_equal expected.sort, result.sort
+    assert_equal [:dlabs], ClaudeAgents::Config.all_components
   end
 
   def test_component_info_returns_correct_structure
@@ -179,8 +172,8 @@ class ConfigTest < ClaudeAgentsTest
 
     assert_equal "dLabs agents", info[:name]
     assert_equal "Local specialized agents", info[:description]
-    assert_equal 5, info[:count]
-    assert_equal "agents/dallasLabs", info[:source_dir]
+    assert_equal 7, info[:count]
+    assert_equal "agents/dallasLabs/agents", info[:source_dir]
     assert_equal "dLabs-", info[:prefix]
     assert_equal :agents, info[:destination]
   end

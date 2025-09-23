@@ -1,5 +1,5 @@
 # ABOUTME: Rake tasks for testing, linting, and development workflows
-# ABOUTME: Provides comprehensive test execution with performance monitoring and reporting
+# ABOUTME: Provides test execution, linting, and development utilities
 
 # frozen_string_literal: true
 
@@ -33,32 +33,6 @@ namespace :test do
     t.libs << "lib"
     t.test_files = FileList["test/integration/**/*_test.rb"]
     t.verbose = true
-  end
-
-  desc "Run performance tests"
-  task :performance do
-    puts "Running performance-focused tests..."
-
-    # Find test files containing performance or large tests
-    test_files = FileList["test/**/*_test.rb"]
-    performance_files = test_files.select do |file|
-      content = File.read(file)
-      content.match?(/def test_.*(?:performance|large)/)
-    end
-
-    if performance_files.empty?
-      puts "No performance tests found"
-    else
-      puts "Found performance tests in #{performance_files.length} files:"
-      performance_files.each { |file| puts "  - #{file}" }
-      puts ""
-
-      # Run just those files with grep for performance methods
-      performance_files.each do |file|
-        puts "Running performance tests in #{file}..."
-        system "ruby -Itest:lib #{file} --name='/performance|large/'"
-      end
-    end
   end
 
   desc "Run tests with coverage reporting"
@@ -232,29 +206,6 @@ namespace :dev do
     puts "\n❌ Checks failed. Please fix issues before committing."
     exit e.status
   end
-
-  desc "Benchmark test execution time"
-  task :benchmark do
-    require "benchmark"
-
-    puts "Benchmarking test execution..."
-
-    times = []
-    3.times do |i|
-      puts "Run #{i + 1}/3..."
-      time = Benchmark.realtime do
-        system "rake test:all > /dev/null 2>&1"
-      end
-      times << time
-      puts "  Time: #{time.round(2)}s"
-    end
-
-    avg_time = times.sum / times.length
-    puts "\nBenchmark Results:"
-    puts "  Average: #{avg_time.round(2)}s"
-    puts "  Best:    #{times.min.round(2)}s"
-    puts "  Worst:   #{times.max.round(2)}s"
-  end
 end
 
 # Documentation tasks
@@ -309,7 +260,6 @@ namespace :ci do
       dev:clean
       test:all
       rubocop
-      test:performance
     ]
 
     tasks.each do |task|

@@ -7,43 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+_No changes yet._
 
-#### Comprehensive Testing Infrastructure
+## [0.4.1] - 2025-09-24
 
-- **91+ test suite** - Complete test coverage with unit, integration, and performance tests
-- **Test-driven development** - TDD approach with tests before implementation
-- **Minitest framework** - Ruby's built-in testing with custom reporters and fail-fast support
-- **Performance benchmarking** - Memory usage monitoring and execution time tracking
-- **Custom test runner** - `bin/test` script with suite selection and parallel execution
-- **Testing documentation** - Comprehensive TESTING.md guide with 600+ lines of documentation
+### Removed (0.4.1)
 
-#### Advanced Testing Features
+- Benchmarking gems and related unused dependencies
 
-- **Environment isolation** - Each test uses isolated temporary directories
-- **Real data operations** - No mocking - uses actual file system operations
-- **CLI integration testing** - Full command-line interface testing with real file operations
-- **Performance thresholds** - Critical operations under 1s, memory usage under 50MB
-- **Continuous testing** - Watch mode with `entr` for development workflow
-- **Coverage reporting** - Optional test coverage analysis and reporting
+### Changed (0.4.1)
 
-#### Testing Support Infrastructure
+- Documentation and comments simplified; version bump to 0.4.1
 
-- **Test helpers and utilities** - Comprehensive filesystem, CLI, and performance helpers
-- **Test fixtures** - Realistic test data generation for consistent testing
-- **Custom assertions** - Specialized assertions for symlinks, file operations, and CLI commands
-- **Failure-only reporting** - Minimalist reporter focusing on failures only
-- **Multiple test runners** - Rake tasks, custom script, and direct Minitest execution
+## [0.4.0] - 2025-09-23
 
-### Changed
+### Added (0.4.0)
 
-- **Documentation consolidation** - Combined MINITEST_SETUP_SUMMARY.md into comprehensive TESTING.md
-- **README updates** - Added testing architecture section with current test metrics
-- **Development workflow** - Enhanced Rake tasks and custom test runner integration
+- Clarifying notes in README about slim dLabs-only scope
+- Leaner test messaging (fail-fast + failures-only remain)
+
+### Changed (0.4.0)
+
+- Established permanent slim baseline (dLabs-only)
+- Simplified README (removed legacy multi-collection + performance references)
+- Consolidated architecture and testing documentation
+
+### Removed (0.4.0)
+
+- External agent collections (wshobson, awesome, wshobson commands)
 
 ## [0.3.0] - 2025-09-19
 
-### Added
+### Added (0.3.0)
 
 #### Enhanced Ruby CLI System
 
@@ -67,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Progress visualization** - Real-time progress bars and status indicators
 - **Component management** - Individual setup, removal, and status checking per component
 
-### Changed
+### Changed (0.3.0)
 
 #### Primary Interface Migration
 
@@ -90,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Interactive prompts** - Improved TTY-based prompts with better validation
 - **Status visualization** - Beautiful table-based status displays
 
-### Technical Improvements
+### Technical Improvements (0.3.0)
 
 - **Thor framework integration** - Professional CLI framework for robust command handling
 - **Service layer architecture** - Clean separation of concerns with dedicated service classes
@@ -106,7 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] - 2025-09-19
 
-### Added
+### Added (0.2.0)
 
 #### Interactive Installation System
 
@@ -163,7 +158,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2025-09-19
 
-### Added
+### Added (0.1.0 - Early Prototype)
 
 #### Core System
 
@@ -200,7 +195,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic handling of existing symlinks and graceful updates
 - Colored terminal output for setup progress tracking
 
-#### Documentation
+#### Documentation (0.2.0)
 
 - Comprehensive README with quick start guide
 - CLAUDE.md for Claude Code integration guidance
@@ -223,7 +218,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2025-01-XX
 
-### Added
+### Added (0.1.0)
 
 - Initial dLabs agent definitions
 - Basic symlink setup scripts

@@ -4,9 +4,12 @@
       "Bash(chmod:*)",
       "Bash(./bin/claude-agents:*)",
       "Bash(DEBUG_TESTS=1 bundle exec ruby -I lib -I test test/integration/cli_commands_test.rb -n test_install_command_with_component_option)",
-      "Read(//Users/dallas/.claude/docs/**)"
+      "Read(//Users/dallas/.claude/docs/**)",
+      "Bash(time:*)",
+      "Bash(PROJECT_BT=1 FAIL_FAST=1 bundle exec rake test)",
+      "Bash(timeout 30 PROJECT_BT=1 FAIL_FAST=1 bundle exec rake test)"
     ],
-    "deny": [],
-    "ask": []
+    "deny": [ ],
+    "ask": [ ]
   }
 }

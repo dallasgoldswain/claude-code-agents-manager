@@ -112,6 +112,7 @@ class ErrorHandlingTest < ClaudeAgentsTest
       ClaudeAgents::ValidationError
     ].each do |error_class|
       error = error_class.new("test message")
+
       assert_kind_of ClaudeAgents::Error, error
       assert_kind_of StandardError, error
     end
@@ -119,12 +120,14 @@ class ErrorHandlingTest < ClaudeAgentsTest
 
   def test_error_message_formatting
     error = ClaudeAgents::ValidationError.new('Component "invalid" not found')
+
     assert_equal 'Component "invalid" not found', error.message
 
     # Test error with additional context
     detailed_error = ClaudeAgents::FileOperationError.new(
       "Failed to process file: /path/to/file.md (Permission denied)"
     )
+
     assert_includes detailed_error.message, "Failed to process file"
     assert_includes detailed_error.message, "/path/to/file.md"
     assert_includes detailed_error.message, "Permission denied"
@@ -193,6 +196,7 @@ class ErrorHandlingTest < ClaudeAgentsTest
 
       # Check that some results have error status
       error_results = result[:results].select { |r| r[:status] == :error }
+
       assert_equal 3, error_results.length
     end
   end
@@ -215,11 +219,17 @@ class ErrorHandlingTest < ClaudeAgentsTest
     object_growth = final_objects - initial_objects
 
     # Should not have significant object growth (allowing some variance)
-    assert object_growth < 1000, "Object count grew by #{object_growth}, possible memory leak"
+    assert_operator object_growth, :<, 1000,
+                    "Object count grew by #{object_growth}, possible memory leak"
   end
 
   def test_error_logging_and_reporting
     # Test that errors are properly logged/reported through UI
+    # Temporarily force verbose UI for this test to ensure output
+    previous_quiet = ENV.fetch("QUIET_TEST", nil)
+    ENV["QUIET_TEST"] = "0"
+    @ui = create_test_ui # recreate with verbose methods
+
     output = capture_output do
       raise ClaudeAgents::FileOperationError, "Test file operation error"
     rescue ClaudeAgents::FileOperationError => e
@@ -227,6 +237,8 @@ class ErrorHandlingTest < ClaudeAgentsTest
     end
 
     assert_includes output[:stdout], "Test file operation error"
+  ensure
+    ENV["QUIET_TEST"] = previous_quiet
   end
 
   def test_validation_edge_cases
@@ -245,13 +257,14 @@ class ErrorHandlingTest < ClaudeAgentsTest
       result = ClaudeAgents::Config.valid_component?(test_case)
 
       # Should always return boolean, never raise exception
-      assert [true, false].include?(result),
-             "Expected boolean for #{test_case.inspect}, got #{result.class}"
+      assert_includes [true, false], result,
+                      "Expected boolean for #{test_case.inspect}, got #{result.class}"
     end
 
     # Test nil separately since it causes to_sym error in the current implementation
     result = ClaudeAgents::Config.valid_component?(nil)
-    assert [true, false].include?(result), "Expected boolean for nil, got #{result.class}"
+
+    assert_includes [true, false], result, "Expected boolean for nil, got #{result.class}"
   rescue NoMethodError
     # This is expected with the current implementation that calls to_sym on nil
     # The test documents this behavior

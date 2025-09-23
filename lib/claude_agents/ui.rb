@@ -157,21 +157,9 @@ module ClaudeAgents
 
     # Status checking
     def component_installed?(component)
-      case component
-      when :dlabs
-        Dir.glob(File.join(Config.agents_dir, "dLabs-*")).any?
-      when :wshobson_agents
-        Dir.glob(File.join(Config.agents_dir, "wshobson-*")).any?
-      when :wshobson_commands
-        Dir.exist?(Config.tools_dir) || Dir.exist?(Config.workflows_dir)
-      when :awesome
-        # Check for category-prefixed files (not dLabs- or wshobson-)
-        Dir.glob(File.join(Config.agents_dir, "*-*"))
-           .reject { |path| File.basename(path).start_with?("dLabs-", "wshobson-") }
-           .any?
-      else
-        false
-      end
+      return false unless component.to_sym == :dlabs
+
+      Dir.glob(File.join(Config.agents_dir, "dLabs-*")).any?
     end
 
     def display_installation_summary(results)
@@ -231,35 +219,11 @@ module ClaudeAgents
         :separator
       ]
 
-      Config.all_components.each do |component|
-        info = Config.component_info(component)
-        installed = component_installed?(component)
-        status = installed ? pastel.green("✅ Installed") : pastel.dim("⭕ Not Installed")
-
-        file_count = if installed
-                       case component
-                       when :dlabs
-                         Dir.glob(File.join(Config.agents_dir, "dLabs-*")).length
-                       when :wshobson_agents
-                         Dir.glob(File.join(Config.agents_dir, "wshobson-*")).length
-                       when :wshobson_commands
-                         Dir.glob(File.join(Config.commands_dir, "**/*")).length
-                       when :awesome
-                         Dir.glob(File.join(Config.agents_dir, "*-*"))
-                            .reject do |path|
-                           File.basename(path).start_with?("dLabs-",
-                                                           "wshobson-")
-                         end
-                            .length
-                       else
-                         0
-                       end
-                     else
-                       0
-                     end
-
-        status_data << [info[:name], status, file_count.to_s]
-      end
+      info = Config.component_info(:dlabs)
+      installed = component_installed?(:dlabs)
+      status = installed ? pastel.green("✅ Installed") : pastel.dim("⭕ Not Installed")
+      file_count = installed ? Dir.glob(File.join(Config.agents_dir, "dLabs-*")).length : 0
+      status_data << [info[:name], status, file_count.to_s]
 
       summary_table(status_data)
     end

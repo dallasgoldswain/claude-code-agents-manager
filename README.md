@@ -1,28 +1,83 @@
-# Claude Agents Collection
+# dLabs Claude Agents (Slim Edition)
 
-⚠️ **This is a side project testing out various things, use at your own risk**
+Minimal Claude Code agent management focused solely on a curated local dLabs agent set.
 
-A comprehensive agent management system that aggregates multiple Claude Code agent collections into a unified workspace, providing access to 200+ specialized AI agents and automation tools.
+## Agents (7)
 
-## Overview
+| Agent | File |
+|-------|------|
+| Django Developer | dLabs-django-developer.md |
+| JS/TS Tech Lead | dLabs-js-ts-tech-lead.md |
+| Data Analysis Expert | dLabs-data-analysis-expert.md |
+| Python Backend Engineer | dLabs-python-backend-engineer.md |
+| Debug Specialist | dLabs-debug-specialist.md |
+| Ruby Expert | dLabs-ruby-expert.md |
+| Joker (Creative Wildcard) | dLabs-joker.md |
 
-This repository combines the best Claude Code agents from multiple sources:
+Add new agents by dropping markdown files into `agents/dallasLabs/agents/` and re-running setup.
 
-- **dallasLabs Collection** (5 agents) - Specialized agents for Django, JavaScript/TypeScript, data analysis, Python backend, and debugging
-- **wshobson Collection** (82 agents) - Production-ready subagents covering the full software development lifecycle
-- **Awesome Claude Code Subagents** (116 agents) - Industry-standard subagents organized by domain
-- **wshobson Commands** (56 tools/workflows) - Multi-agent orchestration and automation commands
+## Install (Quick Start)
 
-## Quick Start
+```bash
+bundle install           # Install Ruby dependencies (first time)
+./bin/claude-agents setup dlabs
+```
 
-### Prerequisites
+Symlinks are created in `~/.claude/agents/` (idempotent: existing ones are skipped).
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed and configured
+## Commands
+
+```bash
+./bin/claude-agents setup dlabs    # Install/update symlinks
+./bin/claude-agents remove dlabs   # Remove dLabs symlinks
+./bin/claude-agents status         # Show status table
+./bin/claude-agents doctor         # Basic environment diagnostics
+./bin/claude-agents version        # Show version
+```
+
+## Development
+
+```bash
+rake test        # Run tests
+rake rubocop     # Lint
+rake dev:check   # Tests + lint
+```
+
+Fail-fast modes:
+
+```bash
+FAIL_FAST=1 bundle exec rake test          # Stop on first failure
+FAILURES_ONLY=1 bundle exec rake test      # Print only failing tests + summary
+PROJECT_BT=1 FAIL_FAST=1 bundle exec rake test  # Fail-fast with trimmed backtraces
+```
+
+## Architecture
+
+Core services (Zeitwerk autoloaded): Config, FileProcessor, SymlinkManager, Installer, Remover, UI, Errors.
+
+## Testing
+
+All tests use real filesystem operations in isolated temp dirs (no mocks). Custom reporter supports failure-only and fail-fast workflows.
+
+Run a focused file:
+
+```bash
+ruby -Itest test/unit/symlink_manager_test.rb
+```
+
+## Adding an Agent
+
+1. Create `agents/dallasLabs/agents/your-agent.md`
+2. Include YAML frontmatter (`name`, `description`, optional `tools`)
+3. Run `./bin/claude-agents setup dlabs`
+
+## Requirements
+
 - [GitHub CLI](https://cli.github.com/) (`gh`) for repository cloning
 - Ruby 3.0+ (for the enhanced CLI experience)
 - Git for repository management
 
-### Installation
+## Full Installation Steps
 
 ```bash
 # Clone this repository
@@ -32,141 +87,66 @@ cd claude-agents
 # Install Ruby dependencies
 bundle install
 
-# Run the enhanced Ruby CLI installer (recommended)
-./bin/claude-agents install
-
-# Legacy installer (deprecated - use Ruby CLI above)
-./install.sh
+# Install dLabs agents
+./bin/claude-agents setup dlabs
 ```
 
-**🚀 The Ruby CLI provides:**
-- Interactive component selection
-- Beautiful colored output with progress indicators
-- System health diagnostics
-- Safe operations with confirmation prompts
-- Comprehensive error handling
+CLI behavior:
 
-This will:
-
-1. Clone all external agent repositories into the `agents/` directory
-2. Set up organized symlinks in `~/.claude/agents/` and `~/.claude/commands/`
-3. Make all 200+ agents immediately available in Claude Code
+1. Create symlinks for all dLabs agent markdown files into `~/.claude/agents/`
+2. Skip any that already exist (idempotent)
+3. Provide colored feedback (linked / skipped / removed)
 
 ### Manual Setup
 
-**Ruby CLI (Recommended):**
+## Commands (Duplicate quick-reference)
+
 ```bash
-# Individual component setup
-./bin/claude-agents setup dlabs
-./bin/claude-agents setup wshobson-agents
-./bin/claude-agents setup wshobson-commands
-./bin/claude-agents setup awesome
-
-# Check installation status
-./bin/claude-agents status
-
-# System health check
-./bin/claude-agents doctor
+./bin/claude-agents setup dlabs   # Install / refresh symlinks
+./bin/claude-agents remove dlabs  # Remove dLabs symlinks
+./bin/claude-agents status        # Show installation status
+./bin/claude-agents version       # Show version
+./bin/claude-agents doctor        # Basic environment diagnostics
 ```
 
-**Legacy Bash Scripts (Deprecated):**
-```bash
-# Complete setup (use Ruby CLI instead)
-./install.sh
+## Agent Organization & Naming
 
-# Individual component setup (use ./bin/claude-agents setup <component> instead)
-./bin/setup_agents.sh                      # dLabs agents
-./bin/setup_wshobson_agents_symlinks.sh    # wshobson agents
-./bin/setup_wshobson_commands_symlinks.sh  # wshobson commands
-./bin/setup_awesome_agents_symlinks.sh     # Awesome Claude Code subagents
-```
-
-## Agent Organization
-
-### Naming Conventions
-
-All agents are prefixed by their source for easy identification:
-
-- `dLabs-*` - dLabs agents (local)
-- `wshobson-*` - wshobson collection agents
-- `{category}-*` - Awesome Claude Code subagents (e.g., `data-ai-ml-engineer`)
+All local agents use the `dLabs-` prefix.
 
 ### Directory Structure
 
-```
+```text
 ~/.claude/
-├── agents/                     # All agents (200+)
-│   ├── dLabs-*                # dLabs (5)
-│   ├── wshobson-*             # wshobson agents (82)
-│   └── {category}-*           # Categorized agents (116)
-└── commands/                   # Automation tools
-    ├── tools/                 # Single-purpose utilities (41)
-    └── workflows/             # Multi-agent orchestration (15)
+└── agents/
+    ├── dLabs-django-developer.md
+    ├── dLabs-js-ts-tech-lead.md
+    ├── dLabs-data-analysis-expert.md
+    ├── dLabs-python-backend-engineer.md
+    ├── dLabs-debug-specialist.md
+    ├── dLabs-ruby-expert.md
+    └── dLabs-joker.md
 ```
 
-## Available Agent Categories
+## Agent Files
 
-### Core Development
+Each agent markdown file contains frontmatter (name, description, tools) and operational guidance. Extend or customize them in `agents/dallasLabs/agents/` then re-run setup.
 
-- **Languages**: Python, JavaScript/TypeScript, Java, Go, Rust, C++, PHP, etc.
-- **Frameworks**: Django, React, Angular, Spring Boot, Laravel, Flutter, etc.
-- **Architecture**: Backend, Frontend, Full-stack, Microservices, APIs
+## Add / Update Agents
 
-### Infrastructure & DevOps
+Add a new markdown file under `agents/dallasLabs/agents/` and rerun:
 
-- **Cloud**: AWS, Azure, GCP architects
-- **Containers**: Docker, Kubernetes specialists
-- **Deployment**: CI/CD, Terraform, Infrastructure as Code
-- **Monitoring**: SRE, Performance, Security
+```bash
+./bin/claude-agents setup dlabs
+```text
 
-### Specialized Domains
-
-- **Data & AI**: ML engineers, Data scientists, Analytics experts
-- **Security**: Auditors, Penetration testers, Compliance
-- **Business**: Product managers, Technical writers, Legal advisors
-
-### Quality Assurance
-
-- **Testing**: Automation, TDD, QA experts
-- **Code Review**: Architecture review, Performance optimization
-- **Debugging**: Error detection, Troubleshooting specialists
-
-## Multi-Agent Workflows
-
-The wshobson commands enable sophisticated multi-agent orchestration:
-
-### Workflows (15 available)
-
-- `feature-development` - Full feature implementation with multiple agents
-- `security-hardening` - Comprehensive security review and implementation
-- `performance-optimization` - Multi-faceted performance improvements
-- `incident-response` - Coordinated incident management
-
-### Tools (41 available)
-
-- `api-scaffold` - Generate API structures
-- `security-scan` - Automated security analysis
-- `deploy-checklist` - Pre-deployment verification
-- `tech-debt` - Technical debt assessment
+Symlinks update idempotently.
 
 ## Usage Examples
 
-### Using Individual Agents
-
 ```bash
-# In Claude Code, invoke agents by name:
-@dLabs-django-developer "Help me optimize this Django view"
-@wshobson-security-auditor "Review this authentication code"
-@data-ai-ml-engineer "Design a machine learning pipeline"
-```
-
-### Using Workflows
-
-```bash
-# Execute multi-agent workflows:
-/feature-development "Implement user authentication with OAuth"
-/performance-optimization "Optimize database queries and caching"
-/security-hardening "Secure the payment processing system"
+@dLabs-django-developer "Optimize this Django queryset"
+@dLabs-python-backend-engineer "Design a background job system"
+@dLabs-ruby-expert "Refactor this service object"
 ```
 
 ## Repository Structure
@@ -184,20 +164,17 @@ claude-agents/
 ├── Gemfile                                 # Ruby dependencies
 ├── Rakefile                                # Development and testing tasks
 └── agents/                                 # Agent collections (auto-created)
-    ├── dallasLabs/                         # Local agent definitions
-    ├── awesome-claude-code-subagents/      # VoltAgent collection
-    ├── wshobson-agents/                    # wshobson agent collection
-    └── wshobson-commands/                  # wshobson command collection
+    └── dallasLabs/                         # Local dLabs agent definitions
 ```
 
-## CLI Interface
-
-### Ruby CLI Commands
+## CLI Interface (Extended)
 
 ```bash
-# Installation and setup
-./bin/claude-agents install                 # Interactive installation
-./bin/claude-agents setup <component>       # Setup specific component
+./bin/claude-agents setup dlabs      # Install/update symlinks
+./bin/claude-agents remove dlabs     # Remove symlinks
+./bin/claude-agents status           # Show status
+./bin/claude-agents doctor           # Environment diagnostic
+./bin/claude-agents version          # Show version
 
 # Management
 ./bin/claude-agents status                  # Show installation status
@@ -208,6 +185,14 @@ claude-agents/
 ./bin/claude-agents version                 # Show version
 ./bin/claude-agents help                    # Show help
 ```
+
+## Notes
+
+This slim edition focuses only on local dLabs agents. For external collections, use the upstream multi-collection repository.
+
+## License
+
+MIT
 
 ## Development Workflow
 
@@ -225,7 +210,6 @@ rake test:unit                              # Unit tests only
 rake test:integration                       # Integration tests only
 
 # Specialized test runs
-rake test:performance                       # Performance-focused tests
 rake test:coverage                          # Tests with coverage reporting
 rake test:fast_fail                         # Stop on first failure with minimal output
 rake test:failures_only                     # Show only test failures
@@ -244,150 +228,20 @@ bin/test --suite unit                       # Run specific test suite
 bin/test --verbose --parallel               # Run with options
 ```
 
-#### Code Quality Tasks
+### Dev Tasks
 
 ```bash
-# Linting
-rake rubocop                                # Run RuboCop linter
-rake rubocop:autocorrect                    # Auto-fix RuboCop issues
-rake rubocop:autocorrect_all                # Auto-fix all issues (including unsafe)
+rake test           # Run full test suite
+rake rubocop        # Lint
+rake dev:check      # Tests + lint
 ```
 
-#### Development Tasks
+<!-- Duplicate extended architecture section removed -->
 
-```bash
-# Environment setup
-rake dev:setup                             # Setup development environment
-rake dev:clean                             # Clean test artifacts
-rake dev:check                             # Full check (tests + linting)
-rake dev:benchmark                          # Benchmark test execution time
-
-# Default task
-rake                                        # Run tests + linting
-```
-
-#### CI/CD Tasks
-
-```bash
-# Continuous Integration
-rake ci:local                               # Run full CI pipeline locally
-rake ci:quick                               # Quick CI check (unit tests + linting)
-```
-
-#### Documentation Tasks
-
-```bash
-# Documentation generation
-rake doc:tests                              # Generate test documentation
-```
-
-### Architecture Overview
-
-The Ruby CLI is built using a service-oriented architecture:
-
-```
-lib/
-├── claude_agents.rb                        # Main module with version
-├── claude_agents_cli.rb                    # Thor-based CLI interface
-└── claude_agents/
-    ├── config.rb                           # Centralized configuration
-    ├── installer.rb                        # Component installation service
-    ├── remover.rb                           # Component removal service
-    ├── symlink_manager.rb                  # Symlink creation and management
-    ├── file_processor.rb                   # File processing and naming
-    ├── ui.rb                               # TTY-based user interface
-    └── errors.rb                           # Custom error classes
-```
-
-**Service Layer Design:**
-- **Config**: Manages component definitions and paths
-- **Installer**: Handles repository cloning and setup
-- **Remover**: Manages safe component removal
-- **SymlinkManager**: Creates organized symlink structures
-- **FileProcessor**: Applies naming conventions and file transformations
-- **UI**: Provides colored output, progress indicators, and user interaction
-
-### Testing Architecture
-
-The project implements a comprehensive testing strategy with **91+ tests** covering all functionality:
-
-```
-test/
-├── test_helper.rb                          # Central configuration and base classes
-├── .minitest.rb                            # Minitest configuration
-├── unit/                                   # Service class tests (70+ tests)
-│   ├── config_test.rb                      # Configuration management (25 tests)
-│   ├── symlink_manager_test.rb             # Symlink operations (19 tests)
-│   ├── file_processor_test.rb              # File processing (14 tests)
-│   └── error_handling_test.rb              # Error scenarios (13 tests)
-├── integration/                            # End-to-end tests (21+ tests)
-│   └── cli_commands_test.rb                # Complete CLI workflows
-└── support/                                # Reusable test utilities
-    ├── filesystem_helpers.rb               # File operations and assertions
-    ├── cli_helpers.rb                      # CLI command testing utilities
-    └── test_fixtures.rb                    # Test data generation and fixtures
-```
-
-**Testing Features:**
-- **91+ comprehensive tests**: Unit, integration, and performance tests
-- **TDD approach**: Tests written before implementation
-- **Real data operations**: No mocking - uses actual file operations
-- **Performance benchmarks**: Critical operations under 1s execution time
-- **Memory monitoring**: Large operations under 50MB growth
-- **Environment isolation**: Each test uses isolated temporary directories
-- **Minitest framework**: Ruby's built-in testing with custom reporters
-- **Continuous testing**: Watch mode and parallel execution support
-
-For detailed testing information, see [TESTING.md](TESTING.md)
-
-## Updating Collections
-
-**Ruby CLI (Recommended):**
-```bash
-# Reinstall with latest updates
-./bin/claude-agents install
-
-# Or manually update repositories
-./bin/claude-agents doctor  # Check repository status
-```
-
-**Manual Repository Updates:**
-```bash
-# Update individual collections manually
-cd agents/awesome-claude-code-subagents && git pull && cd ../..
-cd agents/wshobson-agents && git pull && cd ../..
-cd agents/wshobson-commands && git pull && cd ../..
-
-# Legacy installer (deprecated - use Ruby CLI instead)
-./install.sh
-```
+<!-- Duplicate testing detail section removed (see earlier Testing section) -->
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
+See [CONTRIBUTING.md](CONTRIBUTING.md) for adding or modifying dLabs agents.
 
-- Adding new dLabs agents
-- Reporting issues with external collections
-- Improving setup scripts and documentation
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- [VoltAgent](https://github.com/VoltAgent) - awesome-claude-code-subagents collection
-- [wshobson](https://github.com/wshobson) - agents and commands collections
-- [Anthropic](https://www.anthropic.com) - Claude Code platform
-
-## Support
-
-For issues related to:
-
-- **This repository**: Open an issue here
-- **External collections**: Refer to their respective repositories
-- **Claude Code**: See [official documentation](https://docs.anthropic.com/en/docs/claude-code)
-
----
-
-**Total Available**: 203 agents + 56 commands across all development domains
+<!-- License already declared earlier; keeping single canonical section above -->

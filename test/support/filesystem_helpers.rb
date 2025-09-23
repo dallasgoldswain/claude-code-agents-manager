@@ -87,13 +87,14 @@ module FilesystemHelpers
 
   # File content validation
   def assert_file_contains(filepath, content, message = nil)
-    assert File.exist?(filepath), "File #{filepath} does not exist"
+    assert_path_exists filepath, "File #{filepath} does not exist"
     file_content = File.read(filepath)
+
     assert_includes file_content, content, message || "Expected #{filepath} to contain '#{content}'"
   end
 
   def assert_yaml_frontmatter(filepath, expected_values = {})
-    assert File.exist?(filepath), "File #{filepath} does not exist"
+    assert_path_exists filepath, "File #{filepath} does not exist"
     content = File.read(filepath)
 
     # Extract YAML frontmatter
@@ -101,6 +102,7 @@ module FilesystemHelpers
       yaml_content = Regexp.last_match(1)
       begin
         data = YAML.safe_load(yaml_content)
+
         expected_values.each do |key, value|
           assert_equal value, data[key.to_s], "Expected #{key} to be #{value} in #{filepath}"
         end

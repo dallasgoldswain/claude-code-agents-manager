@@ -12,6 +12,7 @@ gem "tty-progressbar", "~> 0.18"
 gem "tty-prompt", "~> 0.23"
 gem "tty-spinner", "~> 0.9"
 gem "tty-table", "~> 0.12"
+gem "zeitwerk", "~> 2.6"
 
 group :development, :test do
   gem "minitest", "~> 5.20"
@@ -22,5 +23,3 @@ group :development, :test do
   gem "rubocop", "~> 1.56"
   gem "rubocop-minitest", "~> 0.35"
 end
-
-gem "benchmark", "~> 0.4.1"

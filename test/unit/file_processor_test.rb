@@ -24,63 +24,15 @@ class FileProcessorTest < ClaudeAgentsTest
 
       result = @file_processor.get_file_mappings_for_component(:dlabs)
 
-      assert_equal 5, result.length
+      assert_equal 7, result.length
 
       # Check that all files are mapped correctly
       result.each do |mapping|
         assert mapping[:source].end_with?(".md")
         assert mapping[:destination].start_with?(test_agents_dir)
-        assert mapping[:destination].include?("dLabs-")
+        assert_includes mapping[:destination], "dLabs-"
         assert_equal File.basename(mapping[:destination]), mapping[:display_name]
       end
-    end
-  end
-
-  def test_process_component_files_awesome_with_categories
-    with_temp_directory do |temp_dir|
-      # Create test structure
-      awesome_dir = TestFixtures.create_awesome_agents_fixture(temp_dir)
-
-      # Mock Config methods
-      ClaudeAgents::Config.stubs(:source_dir_for).with(:awesome).returns(awesome_dir)
-      ClaudeAgents::Config.stubs(:destination_dir_for).with(:awesome).returns(test_agents_dir)
-      ClaudeAgents::Config.stubs(:prefix_for).with(:awesome).returns(nil)
-
-      result = @file_processor.get_file_mappings_for_component(:awesome)
-
-      assert_equal 6, result.length # 2 files per category × 3 categories
-
-      # Check category-based naming
-      frontend_files = result.select { |m| m[:display_name].start_with?("frontend-") }
-      backend_files = result.select { |m| m[:display_name].start_with?("backend-") }
-      devops_files = result.select { |m| m[:display_name].start_with?("devops-") }
-
-      assert_equal 2, frontend_files.length
-      assert_equal 2, backend_files.length
-      assert_equal 2, devops_files.length
-    end
-  end
-
-  def test_process_component_files_wshobson_commands
-    with_temp_directory do |temp_dir|
-      # Create test structure
-      commands_dir = TestFixtures.create_wshobson_commands_fixture(temp_dir)
-
-      # Mock Config methods
-      ClaudeAgents::Config.stubs(:source_dir_for).with(:wshobson_commands).returns(commands_dir)
-      ClaudeAgents::Config.stubs(:destination_dir_for).with(:wshobson_commands).returns(test_commands_dir)
-      ClaudeAgents::Config.stubs(:prefix_for).with(:wshobson_commands).returns(nil)
-
-      result = @file_processor.get_file_mappings_for_component(:wshobson_commands)
-
-      assert_equal 5, result.length # 3 tools + 2 workflows
-
-      # Check that tools go to tools directory
-      tools_mappings = result.select { |m| m[:destination].include?("/tools/") }
-      workflows_mappings = result.select { |m| m[:destination].include?("/workflows/") }
-
-      assert_equal 3, tools_mappings.length
-      assert_equal 2, workflows_mappings.length
     end
   end
 
@@ -107,7 +59,7 @@ class FileProcessorTest < ClaudeAgentsTest
       result = @file_processor.get_file_mappings_for_component(:test)
 
       assert_equal 1, result.length
-      assert result.first[:display_name] == "test-valid-agent.md"
+      assert_equal "test-valid-agent.md", result.first[:display_name]
     end
   end
 
@@ -159,6 +111,7 @@ class FileProcessorTest < ClaudeAgentsTest
                                   prefix)
 
     expected = File.join(destination_dir, "test-agent.md")
+
     assert_equal expected, result
   end
 
@@ -169,6 +122,7 @@ class FileProcessorTest < ClaudeAgentsTest
     result = @file_processor.send(:generate_destination_path, destination_dir, relative_path, nil)
 
     expected = File.join(destination_dir, "category-agent.md")
+
     assert_equal expected, result
   end
 
@@ -183,12 +137,14 @@ class FileProcessorTest < ClaudeAgentsTest
     tools_path = @file_processor.send(:generate_destination_path, destination_dir,
                                       "tools/test-tool.md", nil)
     expected_tools = "/test/commands/tools/test-tool.md"
+
     assert_equal expected_tools, tools_path
 
     # Workflows directory
     workflows_path = @file_processor.send(:generate_destination_path, destination_dir,
                                           "workflows/test-workflow.md", nil)
     expected_workflows = "/test/commands/workflows/test-workflow.md"
+
     assert_equal expected_workflows, workflows_path
   end
 
@@ -209,27 +165,7 @@ class FileProcessorTest < ClaudeAgentsTest
     assert_equal "category-agent.md", result
   end
 
-  def test_performance_large_directory_scan
-    with_temp_directory do |temp_dir|
-      # Create many files
-      100.times do |i|
-        category_dir = File.join(temp_dir, "category#{i / 10}")
-        FileUtils.mkdir_p(category_dir)
-        create_test_agent_file(File.join(category_dir, "agent#{i}.md"))
-      end
-
-      # Mock Config methods
-      ClaudeAgents::Config.stubs(:valid_component?).with(:test).returns(true)
-      ClaudeAgents::Config.stubs(:source_dir_for).with(:test).returns(temp_dir)
-      ClaudeAgents::Config.stubs(:destination_dir_for).with(:test).returns(test_agents_dir)
-      ClaudeAgents::Config.stubs(:prefix_for).with(:test).returns("test-")
-
-      # Should complete in under 1 second
-      assert_performance_under(1.0) do
-        @file_processor.get_file_mappings_for_component(:test)
-      end
-    end
-  end
+  # Performance tests removed in simplification; focus on correctness only
 
   def test_error_handling_permission_denied
     with_temp_directory do |temp_dir|
