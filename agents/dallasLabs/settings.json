@@ -8,10 +8,11 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(rails db:migrate:*)",
-      "Bash(rake test:*)"
+      "Bash(rake test:*)",
+      "Bash(uv:*)"
     ],
-    "ask": ["Bash(bundle update:*)", "Bash(git push:*)", "Bash(gem push:*)"],
-    "deny": ["Read(./.env)", "Read(./.env.*)", "Read(./secrets/**)"]
+    "ask": [ "Bash(bundle update:*)", "Bash(git push:*)", "Bash(gem push:*)" ],
+    "deny": [ "Read(./.env)", "Read(./.env.*)", "Read(./secrets/**)" ]
   },
   "model": "sonnet[1m]",
   "hooks": {
@@ -26,30 +27,30 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run /Users/harper/.claude/hooks/utilities/UserPromptSubmit/append_ultrathink.py"
+            "command": "/Users/dallas/.claude/hooks/utilities/UserPromptSubmit/append_ultrathink.py"
           }
         ]
       }
     ],
     "SessionStart": [
       {
-        "hooks": []
+        "hooks": [ ]
       }
     ],
     "PreToolUse": [
       {
         "matcher": "*",
-        "hooks": []
+        "hooks": [ ]
       }
     ],
     "Stop": [
       {
-        "hooks": []
+        "hooks": [ ]
       }
     ],
     "Notification": [
       {
-        "hooks": []
+        "hooks": [ ]
       }
     ]
   },
