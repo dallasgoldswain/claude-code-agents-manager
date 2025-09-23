@@ -151,8 +151,12 @@ module CLIHelpers
   def restore_system_command
     return unless defined?(@@system_mocked) && @@system_mocked
 
+    # Remove the singleton method first to avoid redefinition warning
+    Object.singleton_class.send(:remove_method, :system) if Object.singleton_methods.include?(:system)
+
     # Restore original system method
     Object.define_singleton_method(:system, @@original_system)
+
     @@mocked_commands.clear
     @@system_mocked = false
   end
