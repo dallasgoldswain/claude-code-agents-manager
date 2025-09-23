@@ -25,7 +25,7 @@ module ClaudeAgents
     def self.handle_error(error, ui)
       case error
       when UserCancelledError
-        ui.info 'Operation cancelled by user.'
+        ui.info "Operation cancelled by user."
         exit 0
       when ValidationError
         ui.error "Validation failed: #{error.message}"
@@ -38,7 +38,7 @@ module ClaudeAgents
         exit 1
       when RepositoryError
         ui.error "Repository error: #{error.message}"
-        ui.warn 'Please check your internet connection and GitHub CLI installation.'
+        ui.warn "Please check your internet connection and GitHub CLI installation."
         exit 1
       else
         ui.error "Unexpected error: #{error.message}"

@@ -12,15 +12,15 @@ module ClaudeAgents
 
     # Interactive removal with component selection
     def interactive_remove
-      ui.title('Claude Code Agent Remover')
-      ui.info('Select components to remove from your Claude Code installation.')
+      ui.title("Claude Code Agent Remover")
+      ui.info("Select components to remove from your Claude Code installation.")
       ui.newline
 
       # Check what's currently installed
       installed_components = Config.all_components.select { |comp| ui.component_installed?(comp) }
 
       if installed_components.empty?
-        ui.info('No Claude Code agents are currently installed.')
+        ui.info("No Claude Code agents are currently installed.")
         return
       end
 
@@ -32,20 +32,20 @@ module ClaudeAgents
       components_to_remove = ui.removal_confirmation_menu
 
       if components_to_remove.empty?
-        ui.info('No components selected for removal.')
+        ui.info("No components selected for removal.")
         return
       end
 
       ui.newline
-      ui.section('Removal Plan')
+      ui.section("Removal Plan")
       components_to_remove.each do |component|
         info = Config.component_info(component)
         ui.highlight("• #{info[:name]} - #{info[:description]}")
       end
 
       ui.newline
-      ui.warn('This will remove all symlinks for the selected components.')
-      return unless ui.confirm('Are you sure you want to proceed?')
+      ui.warn("This will remove all symlinks for the selected components.")
+      return unless ui.confirm("Are you sure you want to proceed?")
 
       # Perform removals
       remove_components(components_to_remove)
@@ -72,7 +72,7 @@ module ClaudeAgents
     # Remove multiple components with summary
     def remove_components(components)
       ui.newline
-      ui.section('Removing Components')
+      ui.section("Removing Components")
 
       results = {}
 
@@ -94,13 +94,13 @@ module ClaudeAgents
 
       ui.display_removal_summary(results)
       ui.newline
-      ui.success('Removal completed!')
+      ui.success("Removal completed!")
     end
 
     # Remove all installed components
     def remove_all
-      ui.title('Remove All Claude Code Agents')
-      ui.warn('This will remove ALL Claude Code agent installations.')
+      ui.title("Remove All Claude Code Agents")
+      ui.warn("This will remove ALL Claude Code agent installations.")
       ui.newline
 
       # Show current status
@@ -110,18 +110,18 @@ module ClaudeAgents
       installed_components = Config.all_components.select { |comp| ui.component_installed?(comp) }
 
       if installed_components.empty?
-        ui.info('No Claude Code agents are currently installed.')
+        ui.info("No Claude Code agents are currently installed.")
         return
       end
 
-      ui.error('⚠️  WARNING: This will remove ALL installed agent collections!')
+      ui.error("⚠️  WARNING: This will remove ALL installed agent collections!")
       ui.newline
-      return unless ui.confirm('Are you absolutely sure you want to remove everything?')
+      return unless ui.confirm("Are you absolutely sure you want to remove everything?")
 
       # Confirm again for safety
       ui.newline
-      ui.error('⚠️  FINAL WARNING: All agent symlinks will be deleted!')
-      return unless ui.confirm('Type YES to confirm complete removal', default: false)
+      ui.error("⚠️  FINAL WARNING: All agent symlinks will be deleted!")
+      return unless ui.confirm("Type YES to confirm complete removal", default: false)
 
       remove_components(installed_components)
     end
@@ -130,10 +130,10 @@ module ClaudeAgents
 
     # Component-specific removal methods
     def remove_dlabs_agents
-      ui.subsection('Removing dLabs agents')
+      ui.subsection("Removing dLabs agents")
 
       unless ui.component_installed?(:dlabs)
-        ui.info('No dLabs agents found to remove')
+        ui.info("No dLabs agents found to remove")
         return { removed_count: 0, error_count: 0 }
       end
 
@@ -141,10 +141,10 @@ module ClaudeAgents
     end
 
     def remove_wshobson_agents
-      ui.subsection('Removing wshobson agents')
+      ui.subsection("Removing wshobson agents")
 
       unless ui.component_installed?(:wshobson_agents)
-        ui.info('No wshobson agents found to remove')
+        ui.info("No wshobson agents found to remove")
         return { removed_count: 0, error_count: 0 }
       end
 
@@ -152,10 +152,10 @@ module ClaudeAgents
     end
 
     def remove_wshobson_commands
-      ui.subsection('Removing wshobson commands')
+      ui.subsection("Removing wshobson commands")
 
       unless ui.component_installed?(:wshobson_commands)
-        ui.info('No wshobson commands found to remove')
+        ui.info("No wshobson commands found to remove")
         return { removed_count: 0, error_count: 0 }
       end
 
@@ -163,10 +163,10 @@ module ClaudeAgents
     end
 
     def remove_awesome_agents
-      ui.subsection('Removing awesome-claude-code-subagents')
+      ui.subsection("Removing awesome-claude-code-subagents")
 
       unless ui.component_installed?(:awesome)
-        ui.info('No awesome-claude-code-subagents found to remove')
+        ui.info("No awesome-claude-code-subagents found to remove")
         return { removed_count: 0, error_count: 0 }
       end
 
@@ -175,7 +175,7 @@ module ClaudeAgents
 
     # Utility methods
     def cleanup_empty_directories
-      ui.subsection('Cleaning up empty directories')
+      ui.subsection("Cleaning up empty directories")
 
       directories_to_check = [
         Config.tools_dir,
